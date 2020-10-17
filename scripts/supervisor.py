@@ -165,14 +165,14 @@ class Supervisor:
         """ sends the current desired pose to the pose controller """
 
         pose_g_msg = Pose2D()
-        pose_g_msg.x = self.x_g
-        pose_g_msg.y = self.y_g
-        pose_g_msg.theta = self.theta_g
+        pose_g_msg.x =self.x_g#1.5 #
+        pose_g_msg.y = self.y_g#-4#
+        pose_g_msg.theta = self.theta_g# 0#
 
         self.pose_goal_publisher.publish(pose_g_msg)
 
     def nav_to_pose(self):
-        """ sends the current desired pose to the naviagtor """
+        """ sends the current desired pose to the navigator """
 
         nav_g_msg = Pose2D()
         nav_g_msg.x = self.x_g
@@ -185,6 +185,12 @@ class Supervisor:
         """ sends zero velocity to stay put """
 
         vel_g_msg = Twist()
+        vel_g_msg.linear.x = 0
+        vel_g_msg.linear.y = 0
+        vel_g_msg.linear.z = 0
+        vel_g_msg.angular.x = 0
+        vel_g_msg.angular.y = 0
+        vel_g_msg.angular.z = 0
         self.cmd_vel_publisher.publish(vel_g_msg)
 
     def close_to(self, x, y, theta):
@@ -196,9 +202,9 @@ class Supervisor:
 
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
-
-        self.stop_sign_start = rospy.get_rostime()
-        self.mode = Mode.STOP
+        if self.mode != Mode.CROSS:
+            self.stop_sign_start = rospy.get_rostime()
+            self.mode = Mode.STOP
 
     def has_stopped(self):
         """ checks if stop sign maneuver is over """
@@ -259,7 +265,10 @@ class Supervisor:
 
         elif self.mode == Mode.STOP:
             # At a stop sign
-            self.nav_to_pose()
+            if self.has_stopped():
+                self.init_crossing()
+            else:
+                self.stay_idle()
 
         elif self.mode == Mode.CROSS:
             # Crossing an intersection
