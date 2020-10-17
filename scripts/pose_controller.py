@@ -72,7 +72,6 @@ class PoseControllerNode:
         ########## Code starts here ##########
         # TODO: Create a subscriber to the '/cmd_pose' topic that receives
         #       Pose2D messages and calls cmd_pose_callback.
-        rospy.init_node("control_subscriber" , anonymous=True)
         rospy.Subscriber("/cmd_pose", Pose2D , self.cmd_pose_callback)
 
         ########## Code ends here ##########

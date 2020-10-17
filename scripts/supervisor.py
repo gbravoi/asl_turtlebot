@@ -165,9 +165,9 @@ class Supervisor:
         """ sends the current desired pose to the pose controller """
 
         pose_g_msg = Pose2D()
-        pose_g_msg.x =self.x_g#1.5 #
-        pose_g_msg.y = self.y_g#-4#
-        pose_g_msg.theta = self.theta_g# 0#
+        pose_g_msg.x =1.5 #
+        pose_g_msg.y =-4#
+        pose_g_msg.theta =  0#
 
         self.pose_goal_publisher.publish(pose_g_msg)
 
@@ -277,6 +277,8 @@ class Supervisor:
         elif self.mode == Mode.NAV:
             if self.close_to(self.x_g, self.y_g, self.theta_g):
                 self.mode = Mode.IDLE
+            #if self.stop_sign_detected():
+                #self.mode = Mode.STOP
             else:
                 self.nav_to_pose()
 
