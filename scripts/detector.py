@@ -163,7 +163,7 @@ class Detector:
         y = (v-self.cy)/self.fy
         z = 1.
         vector=np.array([x,y,z])
-        vector=np.linalg.norm(vector,2)
+        vector=vector/np.linalg.norm(vector,2)
         x=vector[0]
         y=vector[1]
         z=vector[2]
