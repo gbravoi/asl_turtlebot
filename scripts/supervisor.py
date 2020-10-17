@@ -221,7 +221,7 @@ class Supervisor:
     def has_crossed(self):
         """ checks if crossing maneuver is over """
 
-        return self.mode == Mode.CROSS and \
+        return self.mode == Mode.POSE and \
                rospy.get_rostime() - self.cross_start > rospy.Duration.from_sec(self.params.crossing_time)
 
     ########## Code ends here ##########
@@ -257,11 +257,14 @@ class Supervisor:
             self.stay_idle()
 
         elif self.mode == Mode.POSE:
-            # Moving towards a desired pose
-            if self.close_to(self.x_g, self.y_g, self.theta_g):
-                self.mode = Mode.IDLE
+            if self.has_crossed():
+                self.mode=Mode.NAV
             else:
-                self.go_to_pose()
+                # Moving towards a desired pose
+                if self.close_to(self.x_g, self.y_g, self.theta_g):
+                    self.mode = Mode.IDLE
+                else:
+                    self.go_to_pose()
 
         elif self.mode == Mode.STOP:
             # At a stop sign
@@ -272,13 +275,11 @@ class Supervisor:
 
         elif self.mode == Mode.CROSS:
             # Crossing an intersection
-            self.nav_to_pose()
+            self.mode=Mode.POSE
 
         elif self.mode == Mode.NAV:
             if self.close_to(self.x_g, self.y_g, self.theta_g):
                 self.mode = Mode.IDLE
-            #if self.stop_sign_detected():
-                #self.mode = Mode.STOP
             else:
                 self.nav_to_pose()
 
