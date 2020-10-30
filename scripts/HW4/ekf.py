@@ -325,9 +325,8 @@ class EkfSlam(Ekf):
         # TODO: Compute g, Gx, Gu.
         # HINT: This should be very similar to EkfLocalization.transition_model() and take 1-5 lines of code.
         # HINT: Call tb.compute_dynamics() with the correct elements of self.x
-        g, Gx1, Gu1 = tb.compute_dynamics(self.x[0:3], u, dt)
-        N = len(self.x) - 3
-        g = np.concatenate((g, np.zeros(N)))
+        g1, Gx1, Gu1 = tb.compute_dynamics(self.x[0:3], u, dt)
+        g[:3] = g1
         Gx[0:3,0:3]=Gx1
         Gu[:3] = Gu1
         ########## Code ends here ##########
@@ -359,7 +358,7 @@ class EkfSlam(Ekf):
         z = np.hstack(v_list)
         Q=scipy.linalg.block_diag(*Q_list)
         H = np.vstack(H_list)
-        
+
         ########## Code ends here ##########
 
         return z, Q, H
@@ -463,8 +462,16 @@ class EkfSlam(Ekf):
 
             # First two map lines are assumed fixed so we don't want to propagate
             # any measurement correction to them.
+            x_cam=self.tf_base_to_camera[0]
+            y_cam=self.tf_base_to_camera[1]
+            x_r=self.x[0]
+            y_r=self.x[1]
+            th_r=self.x[2]
+            x_c_w=x_r+x_cam*np.cos(th_r)-y_cam*np.sin(th_r)
+            y_c_w=y_r+x_cam*np.sin(th_r)+y_cam*np.cos(th_r)
             if j >= 2:
                 Hx[:,idx_j:idx_j+2] = np.eye(2)  # FIX ME!
+                Hx[1,idx_j]=-(-x_c_w*np.sin(alpha)+y_c_w*np.cos(alpha))
             ########## Code ends here ##########
             
 
