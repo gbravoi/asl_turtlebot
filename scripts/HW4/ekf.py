@@ -212,13 +212,11 @@ class EkfLocalization(Ekf):
         #       find the closest predicted line and the corresponding minimum Mahalanobis distance
         #       if the minimum distance satisfies the gating criteria, add corresponding entries to v_list, Q_list, H_list
 
-        #attempting to use np.expand_dims
+       
         v_alpha = angle_diff(np.expand_dims(z_raw[0,:],1), hs[0,:]) #shape (2,15)
         v_r = np.expand_dims(z_raw[1,:],1) - hs[1,:] # shape (2,15)
         v = np.dstack((v_alpha,v_r)) # shape 2,15,2
         HSHs = [H.dot(self.Sigma).dot(H.T) for H in Hs] # len 15
-        #Q_raw = np.expand_dims(Q_raw,0)
-        #S = np.expand_dims(HSHs,4) + Q_raw # shape (15,2,2,2)
         HSHs = np.expand_dims(HSHs,0)
         Q_raw_expanded= np.expand_dims(Q_raw,1)
         S=HSHs+Q_raw_expanded#2D list, J rows, I columns. on each element of the list the matrix        v_list = []
@@ -327,8 +325,11 @@ class EkfSlam(Ekf):
         # TODO: Compute g, Gx, Gu.
         # HINT: This should be very similar to EkfLocalization.transition_model() and take 1-5 lines of code.
         # HINT: Call tb.compute_dynamics() with the correct elements of self.x
-
-
+        g, Gx1, Gu1 = tb.compute_dynamics(self.x[0:3], u, dt)
+        N = len(self.x) - 3
+        g = np.concatenate((g, np.zeros(N)))
+        Gx[0:3,0:3]=Gx1
+        Gu[:3] = Gu1
         ########## Code ends here ##########
 
         return g, Gx, Gu
@@ -355,7 +356,10 @@ class EkfSlam(Ekf):
         # TODO: Compute z, Q, H.
         # Hint: Should be identical to EkfLocalization.measurement_model().
 
-
+        z = np.hstack(v_list)
+        Q=scipy.linalg.block_diag(*Q_list)
+        H = np.vstack(H_list)
+        
         ########## Code ends here ##########
 
         return z, Q, H
@@ -385,6 +389,48 @@ class EkfSlam(Ekf):
         # HINT: Should be almost identical to EkfLocalization.compute_innovations(). What is J now?
         # HINT: Instead of getting world-frame line parameters from self.map_lines, you must extract them from the state self.x.
 
+        v_alpha = angle_diff(np.expand_dims(z_raw[0,:],1), hs[0,:]) #shape (2,15)
+        v_r = np.expand_dims(z_raw[1,:],1) - hs[1,:] # shape (2,15)
+        v = np.dstack((v_alpha,v_r)) # shape 2,15,2
+        HSHs = [H.dot(self.Sigma).dot(H.T) for H in Hs] # len 15
+        HSHs = np.expand_dims(HSHs,0)
+        Q_raw_expanded= np.expand_dims(Q_raw,1)
+        S=HSHs+Q_raw_expanded#2D list, J rows, I columns. on each element of the list the matrix        v_list = []
+        v_list=[]
+        Q_list =[]
+        H_list = []
+        g = self.g
+
+
+
+        I=z_raw.shape[1]
+        J=len(Hs)
+        d=np.zeros((I,J))
+        for j in range(J): #all J
+            for i in range(I): # for all I
+                vij=v[i,j]
+                Sij=S[i,j]
+                d[i,j]=np.matmul(np.matmul(np.transpose(vij),np.linalg.inv(Sij)),vij)
+        
+        #now for each measument z_raw (len I) we want to determine the minimum distance.
+        #this distance must be smaller than g to be valid.
+        #min for echa measuremnet
+        min_val=np.min(d,axis=1)
+        min_val_col=np.argmin(d,axis=1)
+        #check treshold and append to list
+        for k in range(len(min_val)):
+            if min_val[k]<g**2:
+                v_i=v[k,min_val_col[k]]
+                Hs_j=Hs[min_val_col[k]]
+                Q_i=Q_raw[k]
+                v_list.append(v_i)      # update v_list
+                Q_list.append(Q_i) # update Q_list
+                H_list.append(Hs_j)    # update H_list
+
+       
+
+        
+
 
         ########## Code ends here ##########
 
@@ -401,7 +447,7 @@ class EkfSlam(Ekf):
             idx_j = 3 + 2 * j
             alpha, r = self.x[idx_j:idx_j+2]
 
-            Hx = np.zeros((2,self.x.size))
+            Hx = np.zeros((2,self.x.size)) #Hx [2,3+2N]
 
             ########## Code starts here ##########
             # TODO: Compute h, Hx.
@@ -410,12 +456,18 @@ class EkfSlam(Ekf):
             # HINT: The first two map lines (j=0,1) are fixed so the Jacobian of h wrt the alpha and r for those lines is just 0. 
             # HINT: For the other map lines (j>2), write out h in terms of alpha and r to get the Jacobian Hx.
 
+            line=np.array([alpha,r])
+            h,Hx1=tb.transform_line_to_scanner_frame(line, self.x[0:3], self.tf_base_to_camera, compute_jacobian=True)
+
+            Hx[:,0:3]=Hx1
 
             # First two map lines are assumed fixed so we don't want to propagate
             # any measurement correction to them.
             if j >= 2:
                 Hx[:,idx_j:idx_j+2] = np.eye(2)  # FIX ME!
             ########## Code ends here ##########
+            
+
 
             h, Hx = tb.normalize_line_parameters(h, Hx)
             hs[:,j] = h
