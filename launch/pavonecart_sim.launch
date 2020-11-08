@@ -1,0 +1,17 @@
+<launch>
+  <!-- declare arg to be passed in -->
+  <!-- <arg name="v_max" /> 
+  <arg name="om_max" /> -->
+  <rosparam param="sim">false</rosparam>
+	<rosparam param="map">false</rosparam>
+	<rosparam param="use_tf">true</rosparam> 
+	<rosparam param="rviz">true</rosparam>
+  <!-- <include file="$(find asl_turtlebot)/launch/turtlebot3_nav_sim.launch"/> -->
+  <!--<node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator"  />-->
+  <node pkg="asl_turtlebot" type="marker_pub.py" name="marker_node"  />
+	<!-- <node pkg="asl_turtlebot" type="pavonecart.py" name="pavonecart"  /> -->
+  <node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator" output="log">
+    <param name="v_max" value="1"/>
+    <param name="om_max" value="1"/>
+  </node>
+</launch>
