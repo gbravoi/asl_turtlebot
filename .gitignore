@@ -1,2 +1,3 @@
 .DS_Store
 *.pyc
+tfmodels/ssd_resnet_50_fpn_coco.pb

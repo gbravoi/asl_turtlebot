@@ -884,6 +884,11 @@
             </box>
           </geometry>
           <material>
+            <script>
+              <uri>model://Apple/materials/scripts</uri>
+              <uri>model://Apple/materials/textures</uri>
+              <name>Apple/Diffuse</name>
+            </script>
           </material>
         </visual>
         <self_collide>0</self_collide>
