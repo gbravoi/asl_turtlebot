@@ -175,7 +175,7 @@ class Supervisor:
         for vendor in stores:
             if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
                 self.vendors_to_visit.append(vendor)
-        self.go_to_vendor()
+        self.init_go_to_vendor()
     
     def gazebo_callback(self, msg):
         if "turtlebot3_burger" not in msg.name:
@@ -232,14 +232,25 @@ class Supervisor:
     # Feel free to change the code here. You may or may not find these functions
     # useful. There is no single "correct implementation".
 
-    def go_to_vendor(self):
-        if self.mode!=Mode.GO_TO_VENDOR and self.mode!=Mode.WAIT_ON_VENDOR:
-            self.mode=Mode.GO_TO_VENDOR
+    def init_go_to_vendor(self):
+        if self.mode==Mode.IDLE:
             #next vendor name
             self.current_vendor_index=0
-        elif self.mode==Mode.GO_TO_VENDOR:
-            #next vendor name
-            self.current_vendor_index+=1
+            if self.current_vendor_index<len(self.vendors_to_visit):
+                self.mode=Mode.GO_TO_VENDOR
+                vendor_name=self.vendors_to_visit[self.current_vendor_index]
+                print("vendor_name ",vendor_name)
+                vendor=self.vendor_dic[vendor_name]
+                #vendor position
+                self.x_g=vendor.position[0]
+                self.y_g=vendor.position[1]
+                self.theta_g=0
+                print("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
+
+
+
+    def go_to_vendor(self):
+        self.current_vendor_index+=1
 
         if self.current_vendor_index<len(self.vendors_to_visit):
             vendor_name=self.vendors_to_visit[self.current_vendor_index]
@@ -416,6 +427,8 @@ class Supervisor:
                 if self.go_to_vendor():
                     self.mode=Mode.GO_TO_VENDOR
                 else:
+                    #clean list of visited vendor
+                    self.vendors_to_visit=[]
                     self.mode = Mode.IDLE #change leter
 
         else:
