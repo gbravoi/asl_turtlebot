@@ -26,7 +26,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: Camera
+    SyncSource: ""
 Toolbars:
   toolButtonStyle: 2
 Visualization Manager:
@@ -70,9 +70,12 @@ Visualization Manager:
       Value: false
       Visibility:
         "": true
+        Axes: true
         Grid: true
         Map: true
         Marker: true
+        Path: true
+        TF: true
         Value: true
       Zoom Factor: 1
     - Alpha: 0.699999988
@@ -156,6 +159,22 @@ Visualization Manager:
                   {}
       Update Interval: 0
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /vendor_marker/apple
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /vendor_marker/banana
+      Name: Marker
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -181,7 +200,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.90813923
+      Distance: 7.39419746
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -219,5 +238,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1264
-  X: 0
-  Y: 0
+  X: -1
+  Y: -18

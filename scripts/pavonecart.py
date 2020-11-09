@@ -7,7 +7,57 @@ from asl_turtlebot.msg import DetectedObject
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from std_msgs.msg import Float32MultiArray, String
+from visualization_msgs.msg import Marker
+import numpy as np
 import tf
+
+
+
+class Vendor:
+
+    def __init__(self, position, name,marker_id):
+        self.name=name
+        self.position=position#tuple (x,y)
+        self.marker_id=marker_id
+        self.publisher= rospy.Publisher('vendor_marker/'+name, Marker, queue_size=10)
+        colors = np.random.rand(1,3)
+        print("COLORS: ", colors)
+        self.marker_color= colors
+
+    def publish_vendor_position(self):
+        marker = Marker()
+
+        marker.header.frame_id = "map"
+        marker.header.stamp = rospy.Time()
+
+        # IMPORTANT: If you're creating multiple markers, 
+        #            each need to have a separate marker ID.
+        marker.id = self.marker_id
+
+        marker.type = 2 # sphere
+
+        marker.pose.position.x = self.position[0]
+        marker.pose.position.y = self.position[1]
+        marker.pose.position.z = 0
+
+        marker.pose.orientation.x = 0.0
+        marker.pose.orientation.y = 0.0
+        marker.pose.orientation.z = 0.0
+        marker.pose.orientation.w = 1.0
+
+        marker.scale.x = 0.5
+        marker.scale.y = 0.5
+        marker.scale.z = 0.5
+
+        marker.color.a = 1
+        marker.color.r = self.marker_color[0][0]
+        marker.color.g = self.marker_color[0][1]
+        marker.color.b = self.marker_color[0][2]
+
+
+        
+        self.publisher.publish(marker)
+    
 
 class Mode(Enum):
     """State machine modes. Feel free to change."""
@@ -17,6 +67,9 @@ class Mode(Enum):
     CROSS = 4
     EXPLORE = 5
     MANUAL = 6
+    GO_TO_VENDOR=7
+    WAIT_ON_VENDOR=8
+
 
 
 class SupervisorParams:
@@ -77,9 +130,12 @@ class Supervisor:
         self.theta_g = 0
 
         # Current mode
-        self.mode = Mode.EXPLORE
+        self.mode = Mode.IDLE
         self.prev_mode = None  # For printing purposes
 
+        self.vendors_to_visit = []
+        self.vendor_dic = {}  #list of all vendors
+        self.current_vendor_index=0
         ########## PUBLISHERS ##########
 
         # Command pose for controller
@@ -89,6 +145,9 @@ class Supervisor:
         self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
         ########## SUBSCRIBERS ##########
+        #request subcriber
+        rospy.Subscriber('/delivery_request', String, self.delivery_request_callback)
+
 
         # Stop sign detector
         # rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -110,7 +169,14 @@ class Supervisor:
         
 
     ########## SUBSCRIBER CALLBACKS ##########
-
+    def delivery_request_callback(self,msg):
+        stores = msg.data.split(",") #[banana, apple]
+        print('stores:', stores)
+        for vendor in stores:
+            if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
+                self.vendors_to_visit.append(vendor)
+        self.go_to_vendor()
+    
     def gazebo_callback(self, msg):
         if "turtlebot3_burger" not in msg.name:
             return
@@ -166,6 +232,30 @@ class Supervisor:
     # Feel free to change the code here. You may or may not find these functions
     # useful. There is no single "correct implementation".
 
+    def go_to_vendor(self):
+        if self.mode!=Mode.GO_TO_VENDOR and self.mode!=Mode.WAIT_ON_VENDOR:
+            self.mode=Mode.GO_TO_VENDOR
+            #next vendor name
+            self.current_vendor_index=0
+        elif self.mode==Mode.GO_TO_VENDOR:
+            #next vendor name
+            self.current_vendor_index+=1
+
+        if self.current_vendor_index<len(self.vendors_to_visit):
+            vendor_name=self.vendors_to_visit[self.current_vendor_index]
+            print("vendor_name ",vendor_name)
+            vendor=self.vendor_dic[vendor_name]
+            #vendor position
+            self.x_g=vendor.position[0]
+            self.y_g=vendor.position[1]
+            self.theta_g=0
+            print("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
+            return True
+        else: #we dont have more vendors to go
+            return False
+
+
+
     def go_to_pose(self,point):
         """ sends the current desired pose to the pose controller """
         print("desires pose"+str(point))
@@ -215,11 +305,22 @@ class Supervisor:
             self.stop_sign_start = rospy.get_rostime()
             self.mode = Mode.STOP
 
+    def init_wait_on_vendor(self):
+        """ initiates wait on vendor """
+        self.wait_on_vendor_start = rospy.get_rostime()
+        self.mode = Mode.WAIT_ON_VENDOR
+
     def has_stopped(self):
         """ checks if stop sign maneuver is over """
 
         return self.mode == Mode.STOP and \
                rospy.get_rostime() - self.stop_sign_start > rospy.Duration.from_sec(self.params.stop_time)
+
+    def has_stopped_on_vendor(self):
+        """ checks if waiting on vendor is over """
+
+        return self.mode == Mode.WAIT_ON_VENDOR and \
+               rospy.get_rostime() - self.wait_on_vendor_start > rospy.Duration.from_sec(self.params.stop_time)
 
     def init_crossing(self):
         """ initiates an intersection crossing maneuver """
@@ -300,6 +401,23 @@ class Supervisor:
                     self.mode = Mode.IDLE
             self.go_to_pose((self.x_g,self.y_g,self.theta_g))
 
+        elif self.mode==Mode.GO_TO_VENDOR:
+            print("GO_TO_VENDOR")
+            self.go_to_pose((self.x_g,self.y_g,self.theta_g))
+            if self.close_to(self.x_g,self.y_g,self.theta_g):
+                self.init_wait_on_vendor()
+
+
+
+        elif self.mode==Mode.WAIT_ON_VENDOR:
+            #WAITING TIME
+            if self.has_stopped_on_vendor():
+                #WHEN TIME IS OVER
+                if self.go_to_vendor():
+                    self.mode=Mode.GO_TO_VENDOR
+                else:
+                    self.mode = Mode.IDLE #change leter
+
         else:
             raise Exception("This mode is not supported: {}".format(str(self.mode)))
 
@@ -312,10 +430,21 @@ class Supervisor:
         self.go_to_pose(point)
         while not rospy.is_shutdown():
             self.loop()
+
+            for vendor in self.vendor_dic.values():
+                #print(vendor.name)
+                vendor.publish_vendor_position()
+
             rate.sleep()
 
 
 if __name__ == '__main__':
-    sup = Supervisor()
 
+    #creating vendors, delte later
+    vendor1=Vendor((0.5,0.2), "apple",0)
+    vendor2=Vendor((1.6,0.2), "banana",1)
+
+    sup = Supervisor()
+    sup.vendor_dic[vendor1.name] = vendor1#delet later
+    sup.vendor_dic[vendor2.name] = vendor2
     sup.run()

@@ -9,6 +9,7 @@
   <!-- <include file="$(find asl_turtlebot)/launch/turtlebot3_nav_sim.launch"/> -->
   <!--<node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator"  />-->
   <node pkg="asl_turtlebot" type="marker_pub.py" name="marker_node"  />
+  <!--<node pkg="asl_turtlebot" type="detector_mobilenet.py" name="turtlebot_detector"  />-->
 	<!-- <node pkg="asl_turtlebot" type="pavonecart.py" name="pavonecart"  /> -->
   <node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator" output="log">
     <param name="v_max" value="1"/>
