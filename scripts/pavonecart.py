@@ -10,6 +10,7 @@ from std_msgs.msg import Float32MultiArray, String
 from visualization_msgs.msg import Marker
 import numpy as np
 import tf
+import utils
 
 
 
@@ -450,6 +451,18 @@ class Supervisor:
 
             rate.sleep()
 
+#other functions
+def get_position_of_vendor(robot_pos, vendor):
+    x_rb = robot_pos[0]
+    y_rb = robot_pos[1]
+    th_rb = robot_pos[2]
+    distance = vendor.distance
+    th_r = utils.wrapToPi(vendor.thetaright)
+    th_l = utils.wrapToPi(vendor.thetaleft)
+    th_v = np.mean([th_r, th_l])
+    x_output = x_rb+distance*np.sin(th_v)
+    y_output = y_rb+distance*np.cos(th_v)
+    return (x_output, y_output)
 
 if __name__ == '__main__':
 
