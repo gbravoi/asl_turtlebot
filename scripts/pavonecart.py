@@ -7,6 +7,7 @@ from asl_turtlebot.msg import DetectedObject
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
 from std_msgs.msg import Float32MultiArray, String
+from asl_turtlebot.msg import DetectedObject, DetectedObjectList
 from visualization_msgs.msg import Marker
 import numpy as np
 import tf
@@ -22,7 +23,7 @@ class Vendor:
         self.marker_id=marker_id
         self.publisher= rospy.Publisher('vendor_marker/'+name, Marker, queue_size=10)
         colors = np.random.rand(1,3)
-        print("COLORS: ", colors)
+        print("Vendor {} created in position {}".format(self.name,self.position))
         self.marker_color= colors
 
     def publish_vendor_position(self):
@@ -46,9 +47,9 @@ class Vendor:
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
 
-        marker.scale.x = 0.5
-        marker.scale.y = 0.5
-        marker.scale.z = 0.5
+        marker.scale.x = 0.2
+        marker.scale.y = 0.2
+        marker.scale.z = 0.2
 
         marker.color.a = 1
         marker.color.r = self.marker_color[0][0]
@@ -131,7 +132,7 @@ class Supervisor:
         self.theta_g = 0
 
         # Current mode
-        self.mode = Mode.IDLE
+        self.mode = Mode.EXPLORE
         self.prev_mode = None  # For printing purposes
 
         self.vendors_to_visit = []
@@ -148,6 +149,8 @@ class Supervisor:
         ########## SUBSCRIBERS ##########
         #request subcriber
         rospy.Subscriber('/delivery_request', String, self.delivery_request_callback)
+        #list with objects
+        rospy.Subscriber('/detector/objects', DetectedObjectList, self.objects_detected_callback)
 
 
         # Stop sign detector
@@ -177,6 +180,30 @@ class Supervisor:
             if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
                 self.vendors_to_visit.append(vendor)
         self.init_go_to_vendor()
+
+    def objects_detected_callback(self,msg):
+        """
+        Received a list with the objects detected
+        If if first time it sees that object, register the vendor
+        """
+        list_vendors_i_see=msg.objects #list of string
+        #check if what we saw is something new
+        for i in range(len(list_vendors_i_see)):
+            vendor_name=list_vendors_i_see[i]
+            if vendor_name not in self.vendor_dic and vendor_name not "strop_sign":
+                #extract information from the message
+                vendor_message=msg.ob_msgs[i]
+                #compute position in world of the vendor
+                robot_pos=(self.x, self.y , self.theta)
+                position=get_position_of_vendor(robot_pos, vendor_message)
+                #create a vendro python-object 
+                vendor= Vendor(position, vendor_name,0)
+                #add vector to dictionary
+                self.vendor_dic[vendor_name] = vendor
+                 
+                 
+
+
     
     def gazebo_callback(self, msg):
         if "turtlebot3_burger" not in msg.name:
@@ -466,11 +493,5 @@ def get_position_of_vendor(robot_pos, vendor):
 
 if __name__ == '__main__':
 
-    #creating vendors, delte later
-    vendor1=Vendor((0.5,0.2), "apple",0)
-    vendor2=Vendor((1.6,0.2), "banana",1)
-
     sup = Supervisor()
-    sup.vendor_dic[vendor1.name] = vendor1#delet later
-    sup.vendor_dic[vendor2.name] = vendor2
     sup.run()

@@ -1,4 +1,4 @@
-material Apple/Diffuse
+material Banana/Diffuse
 {
 	receive_shadows off
 	technique
@@ -7,7 +7,7 @@ material Apple/Diffuse
 		{
 			texture_unit
 			{
-				texture apple.png
+				texture banana.png
 				filtering anistropic
 				max_anisotropy 16
 				scale 1 1

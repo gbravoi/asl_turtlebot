@@ -852,7 +852,7 @@
     </model>
 
 
-    <!--FLAG0 -->
+    <!--FLAG0 DEBUG-->
     <model name='flag0'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
@@ -887,9 +887,9 @@
           </geometry>
           <material>
             <script>
-              <uri>model://Apple/materials/scripts</uri>
-              <uri>model://Apple/materials/textures</uri>
-              <name>Apple/Diffuse</name>
+              <uri>model://Orange/materials/scripts</uri>
+              <uri>model://Orange/materials/textures</uri>
+              <name>Orange/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -1019,10 +1019,10 @@
         <child>plate</child>
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
-      <pose frame=''>3.35 1.4 0.01 0.0 0.0 3.14159</pose>
+      <pose frame=''>3.25 1.6 0.01 0.0 0.0 3.14159</pose>
     </model>
 
-    <!--FLAG1 -->
+    <!--FLAG1 APPLE -->
     <model name='flag1'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
@@ -1192,7 +1192,7 @@
       <pose frame=''>1.9 1.4 0.01 0.0 0.0 3.14159</pose>
     </model>
 
-  <!--FLAG2 -->
+    <!--FLAG2 BANANA-->
     <model name='flag2'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
@@ -1227,9 +1227,9 @@
           </geometry>
           <material>
             <script>
-              <uri>model://Apple/materials/scripts</uri>
-              <uri>model://Apple/materials/textures</uri>
-              <name>Apple/Diffuse</name>
+              <uri>model://Banana/materials/scripts</uri>
+              <uri>model://Banana/materials/textures</uri>
+              <name>Banana/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -1362,7 +1362,7 @@
       <pose frame=''>2.5 1.9 0.01 0.0 0.0 1.57</pose>
     </model>
 
-    <!--FLAG3 -->
+    <!--FLAG3 PIZZA-->
     <model name='flag3'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
@@ -1397,9 +1397,9 @@
           </geometry>
           <material>
             <script>
-              <uri>model://Apple/materials/scripts</uri>
-              <uri>model://Apple/materials/textures</uri>
-              <name>Apple/Diffuse</name>
+              <uri>model://Pizza/materials/scripts</uri>
+              <uri>model://Pizza/materials/textures</uri>
+              <name>Pizza/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -1529,10 +1529,10 @@
         <child>plate</child>
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
-      <pose frame=''>2.8 0.7 0.01 0.0 0.0 3.14159</pose>
+      <pose frame=''>2.8 0.7 0.01 0.0 0.0 1.57</pose>
     </model>
  
-    <!--FLAG4 -->
+    <!--FLAG4 SANDWICH-->
     <model name='flag4'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
@@ -1567,9 +1567,9 @@
           </geometry>
           <material>
             <script>
-              <uri>model://Apple/materials/scripts</uri>
-              <uri>model://Apple/materials/textures</uri>
-              <name>Apple/Diffuse</name>
+              <uri>model://Sandwich/materials/scripts</uri>
+              <uri>model://Sandwich/materials/textures</uri>
+              <name>Sandwich/Diffuse</name>
             </script>
           </material>
         </visual>
