@@ -88,7 +88,7 @@ class SupervisorParams:
         self.mapping = rospy.get_param("map")
 
         # Threshold at which we consider the robot at a location
-        self.pos_eps = rospy.get_param("~pos_eps", 0.1)
+        self.pos_eps = rospy.get_param("~pos_eps", 0.3)
         self.theta_eps = rospy.get_param("~theta_eps", 0.3)
 
         # Time to stop at a stop sign
@@ -123,7 +123,7 @@ class Supervisor:
         self.theta = 0
         
         #points to explore map
-        self.explore_points=[(3.5,0.5,0),(1.6,0.25,0), (0.25,0.25,0),(0.8,2.8,0),(1.6,2.8,0),(1.6,1.6,0)]
+        self.explore_points=[ (3.3,2.8,0),(3.3,1.4,0),(3.1,0.4,0),(1.6,0.25,0), (0.25,0.25,0),(0.8,2.8,0),(0.25,1.5,0),(2.4,1.8,0),(1.5,2.8,0),(1.5,1.5,0)]
 
 
         # Goal state
@@ -165,7 +165,8 @@ class Supervisor:
         self.trans_listener = tf.TransformListener()
 
         # If using rviz, we can subscribe to nav goal click
-        if self.params.rviz:
+        # if self.params.rviz:
+        if True:
             rospy.Subscriber('/move_base_simple/goal', PoseStamped, self.rviz_goal_callback)
         else:
             self.x_g, self.y_g, self.theta_g = 1.5, -4., 0.
@@ -187,10 +188,11 @@ class Supervisor:
         If if first time it sees that object, register the vendor
         """
         list_vendors_i_see=msg.objects #list of string
+        print("vendors we are seeing: ",list_vendors_i_see)
         #check if what we saw is something new
         for i in range(len(list_vendors_i_see)):
             vendor_name=list_vendors_i_see[i]
-            if vendor_name not in self.vendor_dic and vendor_name not "strop_sign":
+            if vendor_name not in self.vendor_dic and vendor_name not in ["stop_sign"]:
                 #extract information from the message
                 vendor_message=msg.ob_msgs[i]
                 #compute position in world of the vendor
@@ -298,6 +300,7 @@ class Supervisor:
     def go_to_pose(self,point):
         """ sends the current desired pose to the pose controller """
         print("desires pose"+str(point))
+        print("current pose {} {} {}".format(self.x,self.y,self.theta))
         pose_g_msg = Pose2D()
         pose_g_msg.x =point[0] #
         pose_g_msg.y =point[1]#
@@ -334,9 +337,13 @@ class Supervisor:
     def close_to(self, x, y, theta):
         """ checks if the robot is at a pose within some threshold """
 
-        return abs(x - self.x) < self.params.pos_eps and \
+        is_there=abs(x - self.x) < self.params.pos_eps and \
                abs(y - self.y) < self.params.pos_eps
-               # and \ abs(theta - self.theta) < self.params.theta_eps
+
+        if theta>=0:
+            is_there=is_there and abs(theta - self.theta) < self.params.theta_eps
+
+        return is_there
 
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
@@ -486,6 +493,7 @@ def get_position_of_vendor(robot_pos, vendor):
     distance = vendor.distance
     th_r = utils.wrapToPi(vendor.thetaright)
     th_l = utils.wrapToPi(vendor.thetaleft)
+    # th_v = th_rb+np.mean([th_r, th_l])
     th_v = np.mean([th_r, th_l])
     x_output = x_rb+distance*np.sin(th_v)
     y_output = y_rb+distance*np.cos(th_v)

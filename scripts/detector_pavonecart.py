@@ -9,7 +9,7 @@ try:
 except:
     pass
 import numpy as np
-from sensor_msgs.msg import Image, CameraInfo, LaserScan
+from sensor_msgs.msg import Image, CameraInfo, LaserScan,CompressedImage
 from asl_turtlebot.msg import DetectedObject, DetectedObjectList
 from cv_bridge import CvBridge, CvBridgeError
 import cv2
@@ -90,7 +90,9 @@ class Detector:
         self.object_labels = load_object_labels(self.params.label_path)
 
         self.tf_listener = TransformListener()
-        rospy.Subscriber('/camera/image_raw', Image, self.camera_callback, queue_size=1)
+        rospy.Subscriber('/camera/image_raw', Image, self.camera_callback, queue_size=1, buff_size=2**24)
+        # rospy.Subscriber('/raspicam_node/image/compressed', CompressedImage, self.camera_callback, queue_size=1, buff_size=2**24)
+
         rospy.Subscriber('/camera/camera_info', CameraInfo, self.camera_info_callback)
         rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
@@ -207,6 +209,12 @@ class Detector:
             img_bgr8 = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         except CvBridgeError as e:
             print(e)
+
+        # try:
+        #     img = self.bridge.compressed_imgmsg_to_cv2(msg, "passthrough")
+        #     img_bgr8 = self.bridge.compressed_imgmsg_to_cv2(msg, "bgr8")
+        # except CvBridgeError as e:
+        #     print(e)
 
         (img_h,img_w,img_c) = img.shape
 

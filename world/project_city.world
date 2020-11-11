@@ -853,7 +853,7 @@
 
 
     <!--FLAG0 DEBUG-->
-    <model name='flag0'>
+    <!-- <model name='flag0'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
         <collision name='collision'>
@@ -1020,10 +1020,10 @@
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
       <pose frame=''>3.25 1.6 0.01 0.0 0.0 3.14159</pose>
-    </model>
+    </model> -->
 
     <!--FLAG1 APPLE -->
-    <model name='flag1'>
+    <!-- <model name='flag1'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
         <collision name='collision'>
@@ -1190,7 +1190,7 @@
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
       <pose frame=''>1.9 1.4 0.01 0.0 0.0 3.14159</pose>
-    </model>
+    </model> -->
 
     <!--FLAG2 BANANA-->
     <model name='flag2'>
@@ -1222,7 +1222,7 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>0.001 0.1 0.065</size>
+              <size>0.001 0.2 0.13</size>
             </box>
           </geometry>
           <material>
@@ -1359,7 +1359,7 @@
         <child>plate</child>
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
-      <pose frame=''>2.5 1.9 0.01 0.0 0.0 1.57</pose>
+      <pose frame=''>2.5 1.9 0.01 0.0 0.0 0</pose>
     </model>
 
     <!--FLAG3 PIZZA-->
@@ -1392,7 +1392,7 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>0.001 0.1 0.065</size>
+              <size>0.001 0.2 0.13</size>
             </box>
           </geometry>
           <material>
@@ -1562,7 +1562,7 @@
         <visual name='visual'>
           <geometry>
             <box>
-              <size>0.001 0.1 0.065</size>
+              <size>0.001 0.2 0.13</size>
             </box>
           </geometry>
           <material>
@@ -1699,7 +1699,7 @@
         <child>plate</child>
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
-      <pose frame=''>2 3 0.01 0.0 0.0 3.14159</pose>
+      <pose frame=''>2 3 0.01 0.0 0.0 1.57</pose>
     </model>
 
 
