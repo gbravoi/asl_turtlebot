@@ -17,9 +17,10 @@ import utils
 
 class Vendor:
 
-    def __init__(self, position, name,marker_id):
+    def __init__(self, position, name,marker_id,distance_detected):
         self.name=name
         self.position=position#tuple (x,y)
+        self.distance_detected=distance_detected
         self.marker_id=marker_id
         self.publisher= rospy.Publisher('vendor_marker/'+name, Marker, queue_size=10)
         colors = np.random.rand(1,3)
@@ -72,6 +73,7 @@ class Mode(Enum):
     GO_TO_VENDOR=7
     WAIT_ON_VENDOR=8
     DELIVER=9
+    STUCK=10
 
 
 
@@ -121,8 +123,8 @@ class Supervisor:
         self.params = SupervisorParams(verbose=True)
 
         # Current state
-        self.x = 0
-        self.y = 0
+        self.x = 3.15
+        self.y = 1.6
         self.theta = 0
 
         self.initial_pos=(3.15,1.6,0)
@@ -143,21 +145,23 @@ class Supervisor:
         self.explore_points=[
             (3.1, 0.4, 1.57), #by pizza
             (2.5, 0.4, 0), #by banana
-            # (3.1, 0.4, 1.57),
             
-            # (0.3, 0.3, 0), #by origin
-            # (0.3, 1.5, 1.57), #by apple #We need to stop by apple
-            # (0.5, 2.6, 0), #by curved corner 
-            # (2.3, 2.8, 0), #by sandwich
-            # (1.5, 2.7, 0), 
-            #(2.2, 1.6, 0) #by orange 
-            # (1.5, 1.5, 0),
+            (0.3, 0.3, 0), #by origin
+            (0.3, 1.5, 1.57), #by apple #We need to stop by apple
+            (0.5, 2.6, 0), #by curved corner 
+            (2.3, 2.8, 0), #by sandwich
+            (1.5, 2.7, 0), 
+            (2.2, 1.6, 0), #by orange 
+            (1.5, 1.5, 0),
         ]
          
         # Goal state
         self.x_g = 0
         self.y_g = 0
         self.theta_g = 0
+        self.previous_goal=None #if get stuck, save her previous goal
+        self.previous_pos=np.array([-100,-100,-100])
+        self.previous_mode=None #mode before getting stuck
 
         # Current mode
         self.mode = Mode.EXPLORE
@@ -220,18 +224,28 @@ class Supervisor:
         #check if what we saw is something new
         for i in range(len(list_vendors_i_see)):
             vendor_name=list_vendors_i_see[i]
-            if vendor_name not in self.vendor_dic and vendor_name not in ["stop_sign"]:
-                #extract information from the message
-                vendor_message=msg.ob_msgs[i]
-                #compute position in world of the vendor
-                robot_pos=(self.x, self.y , self.theta)
-                position=get_position_of_vendor(robot_pos, vendor_message)
-                #create a vendro python-object 
-                vendor= Vendor(position, vendor_name,0)
-                #add vector to dictionary
-                self.vendor_dic[vendor_name] = vendor
-                 
-                 
+            #extract information from the message
+            vendor_message=msg.ob_msgs[i]
+            distance=vendor_message.distance
+            if vendor_name not in ["stop_sign"]:
+                if vendor_name not in self.vendor_dic:
+                    #compute position in world of the vendor
+                    robot_pos=(self.x, self.y , self.theta)
+                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    #create a vendro python-object 
+                    vendor= Vendor(position, vendor_name,0,distance)
+                    #add vector to dictionary
+                    self.vendor_dic[vendor_name] = vendor
+                elif  self.vendor_dic[vendor_name].distance_detected>distance :
+                    #find vendor when i was closer
+                    #compute position in world of the vendor
+                    robot_pos=(self.x, self.y , self.theta)
+                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    vendor=self.vendor_dic[vendor_name]
+                    vendor.position=position
+                    vendor.distance_detected=distance
+
+
 
 
     
@@ -397,6 +411,9 @@ class Supervisor:
         self.mode = Mode.WAIT_ON_VENDOR
         print("New state: WAIT_ON_VENDOR")
 
+    
+
+
     def has_stopped(self):
         """ checks if stop sign maneuver is over """
 
@@ -517,6 +534,9 @@ class Supervisor:
             if self.close_to(self.initial_pos[0],self.initial_pos[1],self.initial_pos[2]):
                 self.init_idle()
 
+
+
+
         else:
             raise Exception("This mode is not supported: {}".format(str(self.mode)))
 
@@ -548,7 +568,7 @@ def get_position_of_vendor(robot_pos, vendor):
     x_rb = robot_pos[0]
     y_rb = robot_pos[1]
     th_rb = robot_pos[2]
-    distance = vendor.distance -0.6
+    distance = vendor.distance -0.4#0.6
     th_r = fixAngle(vendor.thetaright)
     th_l = fixAngle(vendor.thetaleft)
     th_v = np.mean([th_r, th_l])

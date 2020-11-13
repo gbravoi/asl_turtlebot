@@ -56,7 +56,7 @@ class Navigator:
         self.occupancy_updated = False
 
         # plan parameters
-        self.plan_resolution =  0.1 #0.1
+        self.plan_resolution =  0.1
         self.plan_horizon = 15
 
         # time when we started following the plan
@@ -78,7 +78,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.15
+        self.spline_alpha =0.15
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -150,7 +150,8 @@ class Navigator:
                                                   self.map_origin[0],
                                                   self.map_origin[1],
                                                   8,
-                                                  self.map_probs)
+                                                  self.map_probs,
+                                                  0.1)
             if self.x_g is not None:
                 # if we have a goal to plan to, replan
                 rospy.loginfo("replanning because of new map")

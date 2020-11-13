@@ -191,7 +191,6 @@ class AStar(object):
         counter=0
         while len(self.open_set)>0 and counter<1000:
             counter+=1
-            print(len(self.open_set))
             #find the element in the open set with the lower cost
             x_current=self.find_best_est_cost_through()
             #if we reached the goal, construct the path
