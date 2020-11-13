@@ -73,7 +73,8 @@
   </node>
 
   <node pkg="asl_turtlebot" type="goal_commander.py" name="goal_commander" />
-  <node pkg="asl_turtlebot" type="detector_pavonecart.py" name="turtlebot_detector" />
+  <!-- <node pkg="asl_turtlebot" type="detector_pavonecart.py" name="turtlebot_detector" /> -->
+  <node pkg="asl_turtlebot" type="detector_mobilenet.py" name="turtlebot_detector" />
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find asl_turtlebot)/rviz/pavonecart.rviz"/>
 </launch>

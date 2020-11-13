@@ -71,6 +71,7 @@ class Mode(Enum):
     MANUAL = 6
     GO_TO_VENDOR=7
     WAIT_ON_VENDOR=8
+    DELIVER=9
 
 
 
@@ -89,6 +90,7 @@ class SupervisorParams:
 
         # Threshold at which we consider the robot at a location
         self.pos_eps = rospy.get_param("~pos_eps", 0.3)
+        
         self.theta_eps = rospy.get_param("~theta_eps", 0.3)
 
         # Time to stop at a stop sign
@@ -121,11 +123,36 @@ class Supervisor:
         self.x = 0
         self.y = 0
         self.theta = 0
+
+        self.initial_pos=(3.15,1.6,0)
         
         #points to explore map
-        self.explore_points=[ (3.3,2.8,0),(3.3,1.4,0),(3.1,0.4,0),(1.6,0.25,0), (0.25,0.25,0),(0.8,2.8,0),(0.25,1.5,0),(2.4,1.8,0),(1.5,2.8,0),(1.5,1.5,0)]
+        # self.explore_points=[
+        #     (3.3,2.8,0),
+        #     (3.3,1.4,0),
+        #     (3.1,0.4,0),
+        #     (1.6,0.25,0), 
+        #     (0.25,0.25,0),
+        #     (0.8,2.8,0),
+        #     (0.25,1.5,0),
+        #     (2.4,1.8,0),
+        #     (1.5,2.8,0),
+        #     (1.5,1.5,0)]
 
-
+        self.explore_points=[
+            (3.1, 0.4, 1.57), #by pizza
+            (2.5, 0.4, 0), #by banana
+            # (3.1, 0.4, 1.57),
+            
+            # (0.3, 0.3, 0), #by origin
+            # (0.3, 1.5, 1.57), #by apple #We need to stop by apple
+            # (0.5, 2.6, 0), #by curved corner 
+            # (2.3, 2.8, 0), #by sandwich
+            # (1.5, 2.7, 0), 
+            #(2.2, 1.6, 0) #by orange 
+            # (1.5, 1.5, 0),
+        ]
+         
         # Goal state
         self.x_g = 0
         self.y_g = 0
@@ -217,6 +244,9 @@ class Supervisor:
         quaternion = (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w)
         euler = tf.transformations.euler_from_quaternion(quaternion)
         self.theta = euler[2]
+        if self.initial_pos[0]==-1:
+            self.initial_pos=(self.x,self.y,self.theta)
+            print("INITIAL POSITION:  ", self.initial_pos)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -299,8 +329,8 @@ class Supervisor:
 
     def go_to_pose(self,point):
         """ sends the current desired pose to the pose controller """
-        print("desires pose"+str(point))
-        print("current pose {} {} {}".format(self.x,self.y,self.theta))
+        # print("desires pose"+str(point))
+        # print("current pose {} {} {}".format(self.x,self.y,self.theta))
         pose_g_msg = Pose2D()
         pose_g_msg.x =point[0] #
         pose_g_msg.y =point[1]#
@@ -324,15 +354,15 @@ class Supervisor:
 
     def stay_idle(self):
         """ sends zero velocity to stay put """
-
-        vel_g_msg = Twist()
-        vel_g_msg.linear.x = 0
-        vel_g_msg.linear.y = 0
-        vel_g_msg.linear.z = 0
-        vel_g_msg.angular.x = 0
-        vel_g_msg.angular.y = 0
-        vel_g_msg.angular.z = 0
-        self.cmd_vel_publisher.publish(vel_g_msg)
+        pass
+        # vel_g_msg = Twist()
+        # vel_g_msg.linear.x = 0
+        # vel_g_msg.linear.y = 0
+        # vel_g_msg.linear.z = 0
+        # vel_g_msg.angular.x = 0
+        # vel_g_msg.angular.y = 0
+        # vel_g_msg.angular.z = 0
+        # self.cmd_vel_publisher.publish(vel_g_msg)
 
     def close_to(self, x, y, theta):
         """ checks if the robot is at a pose within some threshold """
@@ -340,7 +370,8 @@ class Supervisor:
         is_there=abs(x - self.x) < self.params.pos_eps and \
                abs(y - self.y) < self.params.pos_eps
 
-        if theta>=0:
+        
+        if theta>=0 and self.mode==Mode.EXPLORE:
             is_there=is_there and abs(theta - self.theta) < self.params.theta_eps
 
         return is_there
@@ -445,7 +476,8 @@ class Supervisor:
                     self.go_to_pose(point)
                 else:
                     self.mode = Mode.IDLE
-            self.go_to_pose((self.x_g,self.y_g,self.theta_g))
+            else:
+                self.go_to_pose((self.x_g,self.y_g,self.theta_g))
 
         elif self.mode==Mode.GO_TO_VENDOR:
             print("GO_TO_VENDOR")
@@ -464,7 +496,13 @@ class Supervisor:
                 else:
                     #clean list of visited vendor
                     self.vendors_to_visit=[]
-                    self.mode = Mode.IDLE #change leter
+                    self.mode = Mode.DELIVER 
+        
+        elif self.mode==Mode.DELIVER:
+            #go to initial position 
+            self.go_to_pose(self.initial_pos)
+            if self.close_to(self.initial_pos[0],self.initial_pos[1],self.initial_pos[2]):
+                self.mode = Mode.IDLE
 
         else:
             raise Exception("This mode is not supported: {}".format(str(self.mode)))
@@ -485,18 +523,25 @@ class Supervisor:
 
             rate.sleep()
 
+
+
+def fixAngle(a):
+    if a>np.pi:
+        return a-2*np.pi
+    return a
+
 #other functions
 def get_position_of_vendor(robot_pos, vendor):
     x_rb = robot_pos[0]
     y_rb = robot_pos[1]
     th_rb = robot_pos[2]
-    distance = vendor.distance
-    th_r = utils.wrapToPi(vendor.thetaright)
-    th_l = utils.wrapToPi(vendor.thetaleft)
-    # th_v = th_rb+np.mean([th_r, th_l])
+    distance = vendor.distance -0.6
+    th_r = fixAngle(vendor.thetaright)
+    th_l = fixAngle(vendor.thetaleft)
     th_v = np.mean([th_r, th_l])
-    x_output = x_rb+distance*np.sin(th_v)
-    y_output = y_rb+distance*np.cos(th_v)
+    th_out = th_rb + th_v
+    x_output = x_rb+distance*np.cos(th_out)
+    y_output = y_rb+distance*np.sin(th_out)
     return (x_output, y_output)
 
 if __name__ == '__main__':

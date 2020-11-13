@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi
-from planners import AStar, compute_smoothed_traj
+from planners import AStar, compute_smoothed_traj #, GeometricRRT#DubinsRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -56,7 +56,7 @@ class Navigator:
         self.occupancy_updated = False
 
         # plan parameters
-        self.plan_resolution =  0.1
+        self.plan_resolution =  0.1 #0.1
         self.plan_horizon = 15
 
         # time when we started following the plan
@@ -271,6 +271,9 @@ class Navigator:
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+        #turning_radius = 0.5
+        #problem=DubinsRRTConnect(statespace_min, statespace_max, x_init, x_goal,self.occupancy, turning_radius)
+        #problem=GeometricRRT( state_min, state_max, x_init, x_goal, self.occupancy)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
