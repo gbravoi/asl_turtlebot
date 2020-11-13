@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi
-from planners import AStar, compute_smoothed_traj #, GeometricRRT#DubinsRRTConnect
+from planners import AStar, compute_smoothed_traj
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -78,7 +78,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha =0.15
+        self.spline_alpha = 0.15
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -122,10 +122,10 @@ class Navigator:
         loads in goal if different from current goal, and replans
         """
         if data.x != self.x_g or data.y != self.y_g or data.theta != self.theta_g:
-            print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
             self.x_g = data.x
             self.y_g = data.y
             self.theta_g = data.theta
+            print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
             self.replan()
 
     def map_md_callback(self, msg):
@@ -150,8 +150,7 @@ class Navigator:
                                                   self.map_origin[0],
                                                   self.map_origin[1],
                                                   8,
-                                                  self.map_probs,
-                                                  0.1)
+                                                  self.map_probs)
             if self.x_g is not None:
                 # if we have a goal to plan to, replan
                 rospy.loginfo("replanning because of new map")
@@ -164,7 +163,6 @@ class Navigator:
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
         cmd_vel.angular.z = 0.0
-        print("shutdown")
         self.nav_vel_pub.publish(cmd_vel)
 
     def near_goal(self):
@@ -195,8 +193,6 @@ class Navigator:
         return (self.plan_resolution*round(x[0]/self.plan_resolution), self.plan_resolution*round(x[1]/self.plan_resolution))
 
     def switch_mode(self, new_mode):
-        #if seft and new are park, go to iddle
-
         rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
         self.mode = new_mode
 
@@ -248,7 +244,6 @@ class Navigator:
         cmd_vel.angular.z = om
         self.nav_vel_pub.publish(cmd_vel)
 
-
     def get_current_plan_time(self):
         t = (rospy.get_rostime()-self.current_plan_start_time).to_sec()
         return max(0.0, t)  # clip negative time to 0
@@ -277,13 +272,9 @@ class Navigator:
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
-        #turning_radius = 0.5
-        #problem=DubinsRRTConnect(statespace_min, statespace_max, x_init, x_goal,self.occupancy, turning_radius)
-        #problem=GeometricRRT( state_min, state_max, x_init, x_goal, self.occupancy)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
-        print(success)
         if not success:
             rospy.loginfo("Planning failed")
             return

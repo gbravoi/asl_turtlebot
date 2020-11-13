@@ -148,7 +148,7 @@ class Supervisor:
             
             (0.3, 0.3, 0), #by origin
             (0.3, 1.5, 1.57), #by apple #We need to stop by apple
-            (0.5, 2.6, 0), #by curved corner 
+            (0.6, 2.7, 0), #by curved corner 
             (2.3, 2.8, 0), #by sandwich
             (1.5, 2.7, 0), 
             (2.2, 1.6, 0), #by orange 
@@ -156,15 +156,15 @@ class Supervisor:
         ]
          
         # Goal state
-        self.x_g = 0
-        self.y_g = 0
-        self.theta_g = 0
+        self.x_g = None
+        self.y_g = None
+        self.theta_g = None
         self.previous_goal=None #if get stuck, save her previous goal
         self.previous_pos=np.array([-100,-100,-100])
         self.previous_mode=None #mode before getting stuck
 
         # Current mode
-        self.mode = Mode.EXPLORE
+        self.mode = Mode.IDLE #start IDLE by exploring using click#Mode.EXPLORE
         self.prev_mode = None  # For printing purposes
 
         self.vendors_to_visit = []
@@ -268,6 +268,7 @@ class Supervisor:
         origin_frame = "/map" if self.params.mapping else "/odom"
         print("Rviz command received!")
 
+       
         try:
             nav_pose_origin = self.trans_listener.transformPose(origin_frame, msg)
             self.x_g = nav_pose_origin.pose.position.x
@@ -280,8 +281,12 @@ class Supervisor:
             self.theta_g = euler[2]
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
-
-        self.mode = Mode.EXPLORE  ## CHANGE LATER TO CLICK 
+        
+         #save old state if different from manual or iddle
+        if self.mode!=Mode.MANUAL and self.mode!=Mode.IDLE:
+            self.previous_goal=(self.x_g,self.y_g,self.theta_g)
+            self.previous_mode=self.mode
+            self.mode = Mode.MANUAL  #manual: used to take out the robot from being stuck
 
     # def nav_pose_callback(self, msg):
     #     self.x_g = msg.x
@@ -534,6 +539,19 @@ class Supervisor:
             if self.close_to(self.initial_pos[0],self.initial_pos[1],self.initial_pos[2]):
                 self.init_idle()
 
+        elif self.mode==Mode.MANUAL:
+            #chick with arviz, once in reach the goal go back the state it was before
+            #and the goal it was before
+            if self.x_g is not None:
+                self.go_to_pose((self.x_g,self.y_g,self.theta_g))
+                if self.close_to(self.x_g,self.y_g,self.theta_g):
+                    #if arrived, go to where it was
+                    self.x_g=self.previous_goal[0]
+                    self.y_g=self.previous_goal[1]
+                    self.theta_g=self.previous_goal[2]
+                    self.mode=self.previous_mode
+
+
 
 
 
@@ -544,9 +562,10 @@ class Supervisor:
 
     def run(self):
         rate = rospy.Rate(10) # 10 Hz
-        #set first point as goal
-        point = self.explore_points.pop(0)
-        self.go_to_pose(point)
+        if self.mode==Mode.EXPLORE:#if we are doing autonomous exporation, retrieve firs point
+            #set first point as goal
+            point = self.explore_points.pop(0)
+            self.go_to_pose(point)
         while not rospy.is_shutdown():
             self.loop()
 
