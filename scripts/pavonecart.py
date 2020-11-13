@@ -95,6 +95,7 @@ class SupervisorParams:
 
         # Time to stop at a stop sign
         self.stop_time = rospy.get_param("~stop_time", 3.)
+        self.vendor_stop_time = 10
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.5)
@@ -215,7 +216,7 @@ class Supervisor:
         If if first time it sees that object, register the vendor
         """
         list_vendors_i_see=msg.objects #list of string
-        print("vendors we are seeing: ",list_vendors_i_see)
+        #print("vendors we are seeing: ",list_vendors_i_see)
         #check if what we saw is something new
         for i in range(len(list_vendors_i_see)):
             vendor_name=list_vendors_i_see[i]
@@ -298,8 +299,9 @@ class Supervisor:
             self.current_vendor_index=0
             if self.current_vendor_index<len(self.vendors_to_visit):
                 self.mode=Mode.GO_TO_VENDOR
+                print("New state: GO_TO_VENDOR")
                 vendor_name=self.vendors_to_visit[self.current_vendor_index]
-                print("vendor_name ",vendor_name)
+                print("Go to vendor ",vendor_name)
                 vendor=self.vendor_dic[vendor_name]
                 #vendor position
                 self.x_g=vendor.position[0]
@@ -314,7 +316,7 @@ class Supervisor:
 
         if self.current_vendor_index<len(self.vendors_to_visit):
             vendor_name=self.vendors_to_visit[self.current_vendor_index]
-            print("vendor_name ",vendor_name)
+            print("Go to vendor: ",vendor_name)
             vendor=self.vendor_dic[vendor_name]
             #vendor position
             self.x_g=vendor.position[0]
@@ -352,9 +354,15 @@ class Supervisor:
 
         self.pose_goal_publisher.publish(nav_g_msg)
 
+    def init_idle(self):
+        print("New state: IDLE")
+        self.stay_idle()
+        self.mode=Mode.IDLE
+
+
+
     def stay_idle(self):
         """ sends zero velocity to stay put """
-        pass
         # vel_g_msg = Twist()
         # vel_g_msg.linear.x = 0
         # vel_g_msg.linear.y = 0
@@ -363,6 +371,7 @@ class Supervisor:
         # vel_g_msg.angular.y = 0
         # vel_g_msg.angular.z = 0
         # self.cmd_vel_publisher.publish(vel_g_msg)
+        pass
 
     def close_to(self, x, y, theta):
         """ checks if the robot is at a pose within some threshold """
@@ -386,6 +395,7 @@ class Supervisor:
         """ initiates wait on vendor """
         self.wait_on_vendor_start = rospy.get_rostime()
         self.mode = Mode.WAIT_ON_VENDOR
+        print("New state: WAIT_ON_VENDOR")
 
     def has_stopped(self):
         """ checks if stop sign maneuver is over """
@@ -397,7 +407,7 @@ class Supervisor:
         """ checks if waiting on vendor is over """
 
         return self.mode == Mode.WAIT_ON_VENDOR and \
-               rospy.get_rostime() - self.wait_on_vendor_start > rospy.Duration.from_sec(self.params.stop_time)
+               rospy.get_rostime() - self.wait_on_vendor_start > rospy.Duration.from_sec(self.params.vendor_stop_time)
 
     def init_crossing(self):
         """ initiates an intersection crossing maneuver """
@@ -441,7 +451,7 @@ class Supervisor:
 
         if self.mode == Mode.IDLE:
             # Send zero velocity
-            print("IDLE")
+            # print("IDLE")
             self.stay_idle()
             
         # elif self.mode == Mode.POSE:
@@ -469,18 +479,19 @@ class Supervisor:
         #     self.mode=Mode.POSE
 
         elif self.mode == Mode.EXPLORE:
-            print("EXPLORE")
+            # print("EXPLORE")
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 if len(self.explore_points)>0:
                     point = self.explore_points.pop(0)
                     self.go_to_pose(point)
                 else:
-                    self.mode = Mode.IDLE
+                    self.init_idle()
+                    
             else:
                 self.go_to_pose((self.x_g,self.y_g,self.theta_g))
 
         elif self.mode==Mode.GO_TO_VENDOR:
-            print("GO_TO_VENDOR")
+            # print("GO_TO_VENDOR")
             self.go_to_pose((self.x_g,self.y_g,self.theta_g))
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 self.init_wait_on_vendor()
@@ -488,6 +499,7 @@ class Supervisor:
 
 
         elif self.mode==Mode.WAIT_ON_VENDOR:
+            self.stay_idle()
             #WAITING TIME
             if self.has_stopped_on_vendor():
                 #WHEN TIME IS OVER
@@ -497,12 +509,13 @@ class Supervisor:
                     #clean list of visited vendor
                     self.vendors_to_visit=[]
                     self.mode = Mode.DELIVER 
+                    print("New state: DELIVER")
         
         elif self.mode==Mode.DELIVER:
             #go to initial position 
             self.go_to_pose(self.initial_pos)
             if self.close_to(self.initial_pos[0],self.initial_pos[1],self.initial_pos[2]):
-                self.mode = Mode.IDLE
+                self.init_idle()
 
         else:
             raise Exception("This mode is not supported: {}".format(str(self.mode)))

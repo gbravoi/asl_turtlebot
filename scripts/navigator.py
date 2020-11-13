@@ -122,6 +122,7 @@ class Navigator:
         loads in goal if different from current goal, and replans
         """
         if data.x != self.x_g or data.y != self.y_g or data.theta != self.theta_g:
+            print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
             self.x_g = data.x
             self.y_g = data.y
             self.theta_g = data.theta
@@ -162,6 +163,7 @@ class Navigator:
         cmd_vel = Twist()
         cmd_vel.linear.x = 0.0
         cmd_vel.angular.z = 0.0
+        print("shutdown")
         self.nav_vel_pub.publish(cmd_vel)
 
     def near_goal(self):
@@ -192,6 +194,8 @@ class Navigator:
         return (self.plan_resolution*round(x[0]/self.plan_resolution), self.plan_resolution*round(x[1]/self.plan_resolution))
 
     def switch_mode(self, new_mode):
+        #if seft and new are park, go to iddle
+
         rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
         self.mode = new_mode
 
@@ -243,6 +247,7 @@ class Navigator:
         cmd_vel.angular.z = om
         self.nav_vel_pub.publish(cmd_vel)
 
+
     def get_current_plan_time(self):
         t = (rospy.get_rostime()-self.current_plan_start_time).to_sec()
         return max(0.0, t)  # clip negative time to 0
@@ -277,6 +282,7 @@ class Navigator:
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
+        print(success)
         if not success:
             rospy.loginfo("Planning failed")
             return

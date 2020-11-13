@@ -7,7 +7,7 @@ material Banana/Diffuse
 		{
 			texture_unit
 			{
-				texture banana.png
+				texture banana_v2.png
 				filtering anistropic
 				max_anisotropy 16
 				scale 1 1

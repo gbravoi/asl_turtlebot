@@ -330,21 +330,6 @@
             </script>
           </material>
         </visual>
-        <visual name='visual2'>
-          <pose>0.0 -0.01 0.3 0 0 1.57079632679</pose>
-          <geometry>
-            <box>
-              <size>0.001 0.2 0.13</size>
-            </box>
-          </geometry>
-          <material>
-            <script>
-              <uri>model://Banana/materials/scripts</uri>
-              <uri>model://Banana/materials/textures</uri>
-              <name>Banana/Diffuse</name>
-            </script>
-          </material>
-        </visual>
       </link>
       <pose frame=''>1.82880365761 0.0 0 0 0 3.14159265359</pose>
     </model>
@@ -423,6 +408,21 @@
             <script>
               <name>Gazebo/White</name>
               <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <visual name='visual2'>
+          <pose>-0.1 0.01 0.3 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.2 0.13</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Banana/materials/scripts</uri>
+              <uri>model://Banana/materials/textures</uri>
+              <name>Banana/Diffuse</name>
             </script>
           </material>
         </visual>
