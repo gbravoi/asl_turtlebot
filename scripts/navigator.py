@@ -126,7 +126,8 @@ class Navigator:
             self.y_g = data.y
             self.theta_g = data.theta
             print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
-            self.replan()
+            #self.replan()
+            self.replan_new_goal()
 
     def map_md_callback(self, msg):
         """
@@ -247,6 +248,72 @@ class Navigator:
     def get_current_plan_time(self):
         t = (rospy.get_rostime()-self.current_plan_start_time).to_sec()
         return max(0.0, t)  # clip negative time to 0
+
+    def replan_new_goal(self):
+        """
+        loads goal into pose controller
+        runs planner based on current pose
+        if plan long enough to track:
+            smooths resulting traj, loads it into traj_controller
+            sets self.current_plan_start_time
+            sets mode to ALIGN
+        else:
+            sets mode to PARK
+        """
+        # Make sure we have a map
+        if not self.occupancy:
+            rospy.loginfo("Navigator: replanning canceled, waiting for occupancy map.")
+            self.switch_mode(Mode.IDLE)
+            return
+
+        # Attempt to plan a path
+        state_min = self.snap_to_grid((-self.plan_horizon, -self.plan_horizon))
+        state_max = self.snap_to_grid((self.plan_horizon, self.plan_horizon))
+        x_init = self.snap_to_grid((self.x, self.y))
+        self.plan_start = x_init
+        x_goal = self.snap_to_grid((self.x_g, self.y_g))
+        problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+
+        rospy.loginfo("Navigator: computing navigation plan")
+        success =  problem.solve()
+        if not success:
+            rospy.loginfo("Planning failed")
+            return
+        rospy.loginfo("Planning Succeeded")
+
+        planned_path = problem.path
+        
+
+        # Check whether path is too short
+        if len(planned_path) < 4:
+            rospy.loginfo("Path too short to track")
+            self.switch_mode(Mode.PARK)
+            return
+
+        # Smooth and generate a trajectory
+        traj_new, t_new = compute_smoothed_traj(planned_path, self.v_des, self.spline_alpha, self.traj_dt)
+
+       
+        # Otherwise follow the new plan
+        self.publish_planned_path(planned_path, self.nav_planned_path_pub)
+        self.publish_smoothed_path(traj_new, self.nav_smoothed_path_pub)
+
+        self.pose_controller.load_goal(self.x_g, self.y_g, self.theta_g)
+        self.traj_controller.load_traj(t_new, traj_new)
+
+        self.current_plan_start_time = rospy.get_rostime()
+        self.current_plan_duration = t_new[-1]
+
+        self.th_init = traj_new[0,2]
+        self.heading_controller.load_goal(self.th_init)
+
+        if not self.aligned():
+            rospy.loginfo("Not aligned with start direction")
+            self.switch_mode(Mode.ALIGN)
+            return
+
+        rospy.loginfo("Ready to track")
+        self.switch_mode(Mode.TRACK)
 
     def replan(self):
         """
