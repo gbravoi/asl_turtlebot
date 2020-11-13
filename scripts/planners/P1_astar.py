@@ -189,7 +189,7 @@ class AStar(object):
         #start while loop
         #to avoid infinity while loop set a counter max 
         counter=0
-        while len(self.open_set)>0 and counter<1000:
+        while len(self.open_set)>0 and counter<5000:
             counter+=1
             #find the element in the open set with the lower cost
             x_current=self.find_best_est_cost_through()
@@ -218,6 +218,9 @@ class AStar(object):
                 self.came_from[neighbor]=x_current
                 self.cost_to_arrive[neighbor]=tentative_cost_to_arrive
                 self.est_cost_through[neighbor]=tentative_cost_to_arrive+self.distance(neighbor,self.x_goal)
+        
+        if counter==999:
+            print("problem due a counter in while loop")#i ided this counter, so maybe make a bigger number
         return False
 
 

@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from dubins import path_length, path_sample
 from utils import plot_line_segments, line_line_intersection
 
 # Represents a motion planning problem to be solved using the RRT algorithm
@@ -89,7 +88,7 @@ class RRTConnect(object):
         """
         raise NotImplementedError("steer_towards_backward must be overriden by a subclass of RRTConnect")
 
-    def solve(self, eps, max_iters = 1000):
+    def solve(self, eps=1, max_iters = 1000):
         """
         Uses RRT-Connect to perform bidirectional RRT, with a forward tree
         rooted at self.x_init and a backward tree rooted at self.x_goal, with
@@ -363,6 +362,8 @@ class DubinsRRTConnect(RRTConnect):
     for more details on how these steering trajectories are derived.
     """
     def __init__(self, statespace_lo, statespace_hi, x_init, x_goal, obstacles, turning_radius):
+
+        from dubins import path_length, path_sample
         self.turning_radius = turning_radius
         super(self.__class__, self).__init__(statespace_lo, statespace_hi, x_init, x_goal, obstacles)
 

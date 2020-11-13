@@ -550,6 +550,7 @@ class Supervisor:
                     self.y_g=self.previous_goal[1]
                     self.theta_g=self.previous_goal[2]
                     self.mode=self.previous_mode
+                    self.go_to_pose(self.previous_goal)
 
 
 

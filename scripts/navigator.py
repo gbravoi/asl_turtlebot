@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi
-from planners import AStar, compute_smoothed_traj
+from planners import AStar, compute_smoothed_traj, GeometricRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -126,8 +126,8 @@ class Navigator:
             self.y_g = data.y
             self.theta_g = data.theta
             print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
-            #self.replan()
-            self.replan_new_goal()
+            self.replan()
+            #self.replan_new_goal()
 
     def map_md_callback(self, msg):
         """
@@ -274,6 +274,7 @@ class Navigator:
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
 
+
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
         if not success:
@@ -338,7 +339,8 @@ class Navigator:
         x_init = self.snap_to_grid((self.x, self.y))
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
-        problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+        #problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+        problem=GeometricRRTConnect( state_min, state_max, x_init, x_goal, self.occupancy)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
