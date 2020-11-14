@@ -88,7 +88,7 @@
           <pose>0.0 -0.01 0.3 0 0 1.57079632679</pose>
           <geometry>
             <box>
-              <size>0.001 0.2 0.13</size>
+              <size>0.001 0.3 0.195</size>
             </box>
           </geometry>
           <material>
@@ -100,10 +100,10 @@
           </material>
         </visual>
         <visual name='visual3'>
-          <pose>1 -0.01 0.3 0 0 1.57079632679</pose>
+          <pose>0.7 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
-              <size>0.001 0.2 0.13</size>
+              <size>0.001 0.6 0.4</size>
             </box>
           </geometry>
           <material>
