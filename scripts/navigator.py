@@ -8,17 +8,19 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi
-from planners import AStar, compute_smoothed_traj, GeometricRRTConnect
+from planners import AStar, compute_smoothed_traj #, GeometricRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
 from controllers import PoseController, TrajectoryTracker, HeadingController
 from enum import Enum
 
+from asl_turtlebot.msg import DetectedObject, DetectedObjectList
+
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
-from planners import getfrontier #added for RRT
+# from planners import getfrontier #added for RRT
 
 # state machine modes, not all implemented
 class Mode(Enum):
@@ -26,6 +28,8 @@ class Mode(Enum):
     ALIGN = 1
     TRACK = 2
     PARK = 3
+    STOP=4
+    CROSS=5
 
 class Navigator:
     """
@@ -81,7 +85,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.15
+        self.spline_alpha = 0.015
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -89,6 +93,15 @@ class Navigator:
         self.kpy = 0.5
         self.kdx = 1.5
         self.kdy = 1.5
+
+        #STOP SIGN PARAMETERS
+        # Minimum distance from a stop sign to obey it
+        self.stop_min_dist = 1#rospy.get_param("~stop_min_dist", 0.5)
+        self.crossing_time=6
+        self.stop_time=3
+        self.previous_mode=None
+        self.stop_sign_start = None
+        self.cross_start= None
 
         # heading controller parameters
         self.kp_th = 2.
@@ -110,6 +123,9 @@ class Navigator:
         rospy.Subscriber('/map_metadata', MapMetaData, self.map_md_callback)
         rospy.Subscriber('/cmd_nav', Pose2D, self.cmd_nav_callback)
 
+        # Stop sign detector
+        rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
+
         print "finished init"
         
     def dyn_cfg_callback(self, config, level):
@@ -129,8 +145,8 @@ class Navigator:
             self.y_g = data.y
             self.theta_g = data.theta
             print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
-            self.replan()
-            #self.replan_new_goal()
+            #self.replan()
+            self.replan_new_goal()
 
     def map_md_callback(self, msg):
         """
@@ -154,11 +170,12 @@ class Navigator:
                                                   self.map_origin[0],
                                                   self.map_origin[1],
                                                   8,
-                                                  self.map_probs)
+                                                  self.map_probs,
+                                                  0.3)
             #update frontiers
-            self.frontiers=getfrontier(msg)
+            #self.frontiers=getfrontier(msg)
 
-            if self.x_g is not None:
+            if self.x_g is not None and self.mode!=Mode.STOP:
                 # if we have a goal to plan to, replan
                 rospy.loginfo("replanning because of new map")
                 self.replan() # new map, need to replan
@@ -171,6 +188,57 @@ class Navigator:
         cmd_vel.linear.x = 0.0
         cmd_vel.angular.z = 0.0
         self.nav_vel_pub.publish(cmd_vel)
+
+    def stop_sign_detected_callback(self, msg):
+        """ callback for when the detector has found a stop sign. Note that
+        a distance of 0 can mean that the lidar did not pickup the stop sign at all """
+
+        # distance of the stop sign
+        dist = msg.distance
+
+        # if close enough and in nav mode, stop
+        if dist > 0 and dist < self.stop_min_dist and (self.mode == Mode.TRACK or self.mode==Mode.PARK or self.mode==Mode.ALIGN):
+            self.init_stop_sign()
+
+    def init_stop_sign(self):
+        """ initiates a stop sign maneuver """
+        if self.mode != Mode.CROSS:
+            self.previous_mode=self.mode
+            self.stop_sign_start = rospy.get_rostime()
+            self.mode = Mode.STOP
+
+
+    def stay_idle(self):
+            """ sends zero velocity to stay put """
+            vel_g_msg = Twist()
+            vel_g_msg.linear.x = 0
+            vel_g_msg.linear.y = 0
+            vel_g_msg.linear.z = 0
+            vel_g_msg.angular.x = 0
+            vel_g_msg.angular.y = 0
+            vel_g_msg.angular.z = 0
+            self.nav_vel_pub.publish(vel_g_msg)
+
+    def has_stopped(self):
+        """ checks if stop sign maneuver is over """
+
+        return self.mode == Mode.STOP and \
+               rospy.get_rostime() - self.stop_sign_start > rospy.Duration.from_sec(self.stop_time)
+
+    def init_crossing(self):
+        """ initiates an intersection crossing maneuver """
+
+        self.cross_start = rospy.get_rostime()
+        self.mode = Mode.CROSS
+        self.current_plan_start_time = rospy.get_rostime()
+        self.replan()
+
+    def has_crossed(self):
+        """ checks if crossing maneuver is over """
+
+        return rospy.get_rostime() - self.cross_start > rospy.Duration.from_sec(self.crossing_time)
+
+    
 
     def near_goal(self):
         """
@@ -200,8 +268,9 @@ class Navigator:
         return (self.plan_resolution*round(x[0]/self.plan_resolution), self.plan_resolution*round(x[1]/self.plan_resolution))
 
     def switch_mode(self, new_mode):
-        rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
-        self.mode = new_mode
+        if self.mode!=Mode.CROSS:
+            rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
+            self.mode = new_mode
 
     def publish_planned_path(self, path, publisher):
         # publish planned plan for visualization
@@ -235,8 +304,9 @@ class Navigator:
         are all properly set up / with the correct goals loaded
         """
         t = self.get_current_plan_time()
-
-        if self.mode == Mode.PARK:
+        # if self.mode == Mode.CROSS:
+        #     t-=self.stop_time
+        if self.mode == Mode.PARK or self.mode==Mode.CROSS:
             V, om = self.pose_controller.compute_control(self.x, self.y, self.theta, t)
         elif self.mode == Mode.TRACK:
             V, om = self.traj_controller.compute_control(self.x, self.y, self.theta, t)
@@ -300,6 +370,8 @@ class Navigator:
         # Smooth and generate a trajectory
         traj_new, t_new = compute_smoothed_traj(planned_path, self.v_des, self.spline_alpha, self.traj_dt)
 
+        # follow non smoothed path:
+        # traj_new = planned_path
        
         # Otherwise follow the new plan
         self.publish_planned_path(planned_path, self.nav_planned_path_pub)
@@ -345,9 +417,9 @@ class Navigator:
         x_init = self.snap_to_grid((self.x, self.y))
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
-        #problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
-        print("map width {}, map height{}".format(self.map_width,self.map_height))
-        problem=GeometricRRTConnect( [0,0], [3,3], x_init, x_goal, self.frontiers)
+        problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+        #print("map width {}, map height{}".format(self.map_width,self.map_height))
+        #problem=GeometricRRTConnect( [0,0], [3,3], x_init, x_goal, self.frontiers)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
@@ -364,9 +436,15 @@ class Navigator:
             rospy.loginfo("Path too short to track")
             self.switch_mode(Mode.PARK)
             return
+        
+        if self.mode==Mode.CROSS:
+            return
 
         # Smooth and generate a trajectory
         traj_new, t_new = compute_smoothed_traj(planned_path, self.v_des, self.spline_alpha, self.traj_dt)
+
+        # follow non smoothed path
+        # traj_new = planned_path
 
         # If currently tracking a trajectory, check whether new trajectory will take more time to follow
         if self.mode == Mode.TRACK:
@@ -429,6 +507,7 @@ class Navigator:
                 if self.aligned():
                     self.current_plan_start_time = rospy.get_rostime()
                     self.switch_mode(Mode.TRACK)
+
             elif self.mode == Mode.TRACK:
                 if self.near_goal():
                     self.switch_mode(Mode.PARK)
@@ -446,8 +525,25 @@ class Navigator:
                     self.theta_g = None
                     self.switch_mode(Mode.IDLE)
 
+
+            elif self.mode == Mode.STOP:
+                print("STOP")
+                # At a stop sign
+                if self.has_stopped():
+                    self.init_crossing()
+                else:
+                    self.stay_idle()
+
+            elif self.mode == Mode.CROSS:
+                print("CROSS")
+                # Crossing an intersection
+                
+                if self.has_crossed():
+                    self.mode=self.previous_mode
+
             self.publish_control()
             rate.sleep()
+
 
 if __name__ == '__main__':    
     nav = Navigator()

@@ -338,11 +338,22 @@ class GeometricRRTConnect(RRTConnect):
         return self.steer_towards_forward(x2, x1, eps)
 
     def is_free_motion(self, obstacles, x1, x2):
-        motion = np.array([x1, x2])
-        for line in obstacles:
-            if line_line_intersection(motion, line):
-                return False
-        return True
+        # motion = np.array([x1, x2])
+        # for line in obstacles:
+        #     if line_line_intersection(motion, line):
+        #         return False
+        # return True
+
+        # #for loop to check moving resolution, p2 a point dx from x1
+        # dx=obstacles.resolution
+        # p2_x=x1
+        # while p2_x
+        # m=(x2[1]-x1[1])/(x2[0]-x1[0)]
+        # p2_x=x1[0]+dx
+        # p2_y=m*(p2_x-x1[0])+y1[0]
+        pass
+
+        
 
     def plot_tree(self, V, P, **kwargs):
         plot_line_segments([(V[P[i],:], V[i,:]) for i in range(V.shape[0]) if P[i] >= 0], **kwargs)

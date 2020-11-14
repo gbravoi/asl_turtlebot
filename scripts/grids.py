@@ -46,6 +46,9 @@ class StochOccupancyGrid2D(object):
     def snap_to_grid(self, x):
         return (self.resolution*round(x[0]/self.resolution), self.resolution*round(x[1]/self.resolution))
 
+    # def is_in_padded_area():
+    #     return True if 
+
     def is_free(self, state):
         # combine the probabilities of each cell by assuming independence
         # of each estimation

@@ -176,7 +176,7 @@ class Supervisor:
         self.pose_goal_publisher = rospy.Publisher('/cmd_nav', Pose2D, queue_size=10)
 
         # Command vel (used for idling)
-        self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        #self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
         ########## SUBSCRIBERS ##########
         #request subcriber
@@ -185,7 +185,7 @@ class Supervisor:
         rospy.Subscriber('/detector/objects', DetectedObjectList, self.objects_detected_callback)
 
 
-        # Stop sign detector
+        # # Stop sign detector
         # rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
 
         # High-level navigation pose
@@ -294,16 +294,17 @@ class Supervisor:
     #     self.theta_g = msg.theta
     #     self.mode = Mode.NAV
 
-    # def stop_sign_detected_callback(self, msg):
-    #     """ callback for when the detector has found a stop sign. Note that
-    #     a distance of 0 can mean that the lidar did not pickup the stop sign at all """
+    def stop_sign_detected_callback(self, msg):
+        """ callback for when the detector has found a stop sign. Note that
+        a distance of 0 can mean that the lidar did not pickup the stop sign at all """
 
-    #     # distance of the stop sign
-    #     dist = msg.distance
+        # distance of the stop sign
+        dist = msg.distance
 
-    #     # if close enough and in nav mode, stop
-    #     if dist > 0 and dist < self.params.stop_min_dist and self.mode == Mode.NAV:
-    #         self.init_stop_sign()
+        # if close enough and in nav mode, stop
+        if dist > 0 and dist < self.params.stop_min_dist and self.mode == Mode.NAV:
+            self.init_stop_sign()
+
 
 
     ########## STATE MACHINE ACTIONS ##########
@@ -407,8 +408,10 @@ class Supervisor:
     def init_stop_sign(self):
         """ initiates a stop sign maneuver """
         if self.mode != Mode.CROSS:
+            self.previous_mode=self.mode
             self.stop_sign_start = rospy.get_rostime()
             self.mode = Mode.STOP
+            
 
     def init_wait_on_vendor(self):
         """ initiates wait on vendor """
@@ -476,29 +479,29 @@ class Supervisor:
             # print("IDLE")
             self.stay_idle()
             
-        # elif self.mode == Mode.POSE:
-        #     print("POSE")
-        #     if self.has_crossed():
-        #         self.mode=Mode.NAV
-        #     else:
-        #         # Moving towards a desired pose
-        #         if self.close_to(self.x_g, self.y_g, self.theta_g):
-        #             self.mode = Mode.IDLE
-        #         else:
-        #             self.go_to_pose()
+        elif self.mode == Mode.POSE:
+            print("POSE")
+            if self.has_crossed():
+                self.mode=self.previous_mode
+            # else:
+            #     # Moving towards a desired pose
+            #     if self.close_to(self.x_g, self.y_g, self.theta_g):
+            #         self.mode = Mode.IDLE
+            #     else:
+            #         self.go_to_pose()
 
-        # elif self.mode == Mode.STOP:
-        #     print("STOP")
-        #     # At a stop sign
-        #     if self.has_stopped():
-        #         self.init_crossing()
-        #     else:
-        #         self.stay_idle()
+        elif self.mode == Mode.STOP:
+            print("STOP")
+            # At a stop sign
+            if self.has_stopped():
+                self.init_crossing()
+            else:
+                self.stay_idle()
 
-        # elif self.mode == Mode.CROSS:
-        #     print("CROSS")
-        #     # Crossing an intersection
-        #     self.mode=Mode.POSE
+        elif self.mode == Mode.CROSS:
+            print("CROSS")
+            # Crossing an intersection
+            self.mode=Mode.POSE
 
         elif self.mode == Mode.EXPLORE:
             # print("EXPLORE")

@@ -189,7 +189,7 @@ class AStar(object):
         #start while loop
         #to avoid infinity while loop set a counter max 
         counter=0
-        while len(self.open_set)>0 and counter<5000:
+        while len(self.open_set)>0 and counter<1000:
             counter+=1
             #find the element in the open set with the lower cost
             x_current=self.find_best_est_cost_through()
