@@ -163,7 +163,7 @@ class Supervisor:
         self.x_g = None
         self.y_g = None
         self.theta_g = None
-        self.previous_goal=None #if get stuck, save her previous goal
+        self.previous_goal=[0,0,0] #if get stuck, save her previous goal
         self.previous_pos=np.array([-100,-100,-100])
         self.previous_mode=None #mode before getting stuck
 
@@ -279,6 +279,15 @@ class Supervisor:
         origin_frame = "/map" if self.params.mapping else "/odom"
         print("Rviz command received!")
 
+        #save old state if different from manual or iddle
+        if self.mode!=Mode.MANUAL and self.mode!=Mode.IDLE:
+            self.previous_goal[0]=self.x_g
+            self.previous_goal[1]=self.y_g
+            self.previous_goal[2]=self.theta_g
+            print("previous goal ", self.previous_goal)
+            self.previous_mode=self.mode
+            self.mode = Mode.MANUAL  #manual: used to take out the robot from being stuck
+
        
         try:
             nav_pose_origin = self.trans_listener.transformPose(origin_frame, msg)
@@ -293,12 +302,7 @@ class Supervisor:
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
         
-         #save old state if different from manual or iddle
-        if self.mode!=Mode.MANUAL and self.mode!=Mode.IDLE:
-            self.previous_goal=(self.x_g,self.y_g,self.theta_g)
-            self.previous_mode=self.mode
-            self.mode = Mode.MANUAL  #manual: used to take out the robot from being stuck
-
+       
     # def nav_pose_callback(self, msg):
     #     self.x_g = msg.x
     #     self.y_g = msg.y
@@ -563,6 +567,7 @@ class Supervisor:
                     self.x_g=self.previous_goal[0]
                     self.y_g=self.previous_goal[1]
                     self.theta_g=self.previous_goal[2]
+                    print("going again to previous goal goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
                     self.mode=self.previous_mode
                     self.go_to_pose(self.previous_goal)
 

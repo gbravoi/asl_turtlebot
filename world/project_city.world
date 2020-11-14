@@ -944,7 +944,7 @@
 
 
     <!--FLAG0 DEBUG-->
-    <model name='flag0'>
+    <!-- <model name='flag0'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
         <collision name='collision'>
@@ -1111,7 +1111,7 @@
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
       <pose frame=''>3.25 1.6 0.01 0.0 0.0 3.14159</pose>
-    </model>
+    </model> -->
 
     <!--FLAG1 APPLE -->
     <!-- <model name='flag1'>

@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi
-from planners import AStar, compute_smoothed_traj #, GeometricRRTConnect
+from planners import AStar, compute_smoothed_traj#,  GeometricRRT#GeometricRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ from asl_turtlebot.msg import DetectedObject, DetectedObjectList
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
-# from planners import getfrontier #added for RRT
+
 
 # state machine modes, not all implemented
 class Mode(Enum):
@@ -60,7 +60,6 @@ class Navigator:
         self.map_probs = []
         self.occupancy = None
         self.occupancy_updated = False
-        self.frontiers=None
 
         # plan parameters
         self.plan_resolution =  0.1
@@ -172,8 +171,7 @@ class Navigator:
                                                   8,
                                                   self.map_probs,
                                                   0.3)
-            #update frontiers
-            #self.frontiers=getfrontier(msg)
+
 
             if self.x_g is not None and self.mode!=Mode.STOP:
                 # if we have a goal to plan to, replan
@@ -419,7 +417,7 @@ class Navigator:
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
         #print("map width {}, map height{}".format(self.map_width,self.map_height))
-        #problem=GeometricRRTConnect( [0,0], [3,3], x_init, x_goal, self.frontiers)
+        #problem=GeometricRRT( [0,0], [3,3], x_init, x_goal, self.occupancy)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
@@ -510,12 +508,12 @@ class Navigator:
             elif self.mode == Mode.TRACK:
                 if self.near_goal():
                     self.switch_mode(Mode.PARK)
-                elif not self.close_to_plan_start():
-                    rospy.loginfo("replanning because far from start")
-                    self.replan()
-                elif (rospy.get_rostime() - self.current_plan_start_time).to_sec() > self.current_plan_duration:
-                    rospy.loginfo("replanning because out of time")
-                    self.replan() # we aren't near the goal but we thought we should have been, so replan
+                # elif not self.close_to_plan_start():
+                #     rospy.loginfo("replanning because far from start")
+                #     self.replan()
+                # # elif (rospy.get_rostime() - self.current_plan_start_time).to_sec() > self.current_plan_duration:
+                #     rospy.loginfo("replanning because out of time")
+                #     self.replan() # we aren't near the goal but we thought we should have been, so replan
             elif self.mode == Mode.PARK:
                 if self.at_goal():
                     # forget about goal:

@@ -265,11 +265,43 @@ class GeometricRRT(RRT):
         ########## Code ends here ##########
 
     def is_free_motion(self, obstacles, x1, x2):
-        motion = np.array([x1, x2])
-        for line in obstacles:
-            if line_line_intersection(motion, line):
+        # motion = np.array([x1, x2])
+        # for line in obstacles:
+        #     if line_line_intersection(motion, line):
+        #         return False
+        # return True
+        """
+        Function that check all element sin the grid between 2 points in a straight line
+        return false if finds an obstacle
+        else true
+        """
+        x1=np.array([x1[0],x1[1]])
+        x2=np.array([x2[0],x2[1]])
+        print("start {} end {}".format(x1,x2) )
+        #for loop to check moving resolution, p2 a point dx from x1
+        dx=obstacles.resolution
+        p2_old=x1 #point to keep track where we are
+        goal_distance=np.linalg.norm(x1-x2)
+        p2_distance=np.linalg.norm(p2_old-x1)
+        m=(x2[1]-x1[1])/(x2[0]-x1[0]) #slope
+        #stop while if we are farther that the point we are trying to connect
+        while p2_distance<goal_distance:
+            p2_x=p2_old[0]+dx
+            p2_y=m*(p2_x-p2_old[0])+p2_old[1]
+            p2=np.array([p2_x,p2_y])
+            print("p2",p2)
+            new_p2=obstacles.snap_to_grid(p2)
+            is_free=obstacles.is_free(new_p2)#check if that element in the gree has an obstacle
+            if not is_free:
                 return False
+            else:#update for next iteration
+                goal_distance=np.linalg.norm(x1-x2)
+                p2_distance=np.linalg.norm(new_p2-x1)
+                p2_old=new_p2
+
+
         return True
+
 
     def plot_tree(self, V, P, **kwargs):
         plot_line_segments([(V[P[i],:], V[i,:]) for i in range(V.shape[0]) if P[i] >= 0], **kwargs)
