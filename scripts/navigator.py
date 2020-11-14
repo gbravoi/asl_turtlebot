@@ -76,7 +76,7 @@ class Navigator:
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
-        self.start_pos_thresh = 0.2     # threshold to be far enough into the plan to recompute it
+        self.start_pos_thresh = 0.1    # threshold to be far enough into the plan to recompute it
 
         # threshold at which navigator switches from trajectory to pose control
         self.near_thresh = 0.2
@@ -106,7 +106,7 @@ class Navigator:
         self.kp_th = 2.
 
         self.traj_controller = TrajectoryTracker(self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max)
-        self.pose_controller = PoseController(0., 0., 0., self.v_max, self.om_max)
+        self.pose_controller = PoseController(0.4, 0.8, 0.8, self.v_max, self.om_max)
         self.heading_controller = HeadingController(self.kp_th, self.om_max)
 
         self.nav_planned_path_pub = rospy.Publisher('/planned_path', Path, queue_size=10)
@@ -179,9 +179,9 @@ class Navigator:
 
 
 
-            if self.x_g is not None and self.mode!=Mode.STOP:
+            if (self.x_g is not None and not self.near_goal()) and self.mode!=Mode.STOP:
                 # if we have a goal to plan to, replan
-                rospy.loginfo("replanning because of new map")
+                rospy.loginfo("replanning because we are far away from the goal")
                 self.replan() # new map, need to replan
 
     def shutdown_callback(self):
@@ -356,11 +356,15 @@ class Navigator:
 
 
         rospy.loginfo("Navigator: computing navigation plan")
-        success =  problem.solve()
+        success =  False
         if not success:
             rospy.loginfo("Planning failed")
             return
         rospy.loginfo("Planning Succeeded")
+
+
+
+
 
         planned_path = problem.path
         
@@ -514,12 +518,12 @@ class Navigator:
             elif self.mode == Mode.TRACK:
                 if self.near_goal():
                     self.switch_mode(Mode.PARK)
-                # elif not self.close_to_plan_start():
-                #     rospy.loginfo("replanning because far from start")
-                #     self.replan()
-                # # elif (rospy.get_rostime() - self.current_plan_start_time).to_sec() > self.current_plan_duration:
-                #     rospy.loginfo("replanning because out of time")
-                #     self.replan() # we aren't near the goal but we thought we should have been, so replan
+                elif not self.close_to_plan_start():
+                    rospy.loginfo("replanning because far from start")
+                    self.replan()
+                elif (rospy.get_rostime() - self.current_plan_start_time).to_sec() > self.current_plan_duration:
+                    rospy.loginfo("replanning because out of time")
+                    self.replan() # we aren't near the goal but we thought we should have been, so replan
             elif self.mode == Mode.PARK:
                 if self.at_goal():
                     # forget about goal:
