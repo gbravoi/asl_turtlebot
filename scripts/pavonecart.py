@@ -37,7 +37,11 @@ class Vendor:
         #            each need to have a separate marker ID.
         marker.id = self.marker_id
 
-        marker.type = 2 # sphere
+        marker.type = 2# sphere
+
+        if self.name=="dog":
+            marker.type = 9
+            marker.text="Dog"
 
         marker.pose.position.x = self.position[0]
         marker.pose.position.y = self.position[1]
@@ -184,6 +188,9 @@ class Supervisor:
         #list with objects
         rospy.Subscriber('/detector/objects', DetectedObjectList, self.objects_detected_callback)
 
+        #find dog
+        rospy.Subscriber('/detector/dog', DetectedObject, self.dog_detected_callback)
+
 
         # # Stop sign detector
         # rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -213,6 +220,10 @@ class Supervisor:
             if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
                 self.vendors_to_visit.append(vendor)
         self.init_go_to_vendor()
+
+    def dog_detected_callback(self,msg):
+        print("Found the dog!")
+
 
     def objects_detected_callback(self,msg):
         """

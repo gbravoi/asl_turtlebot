@@ -99,6 +99,21 @@
             </script>
           </material>
         </visual>
+        <visual name='visual3'>
+          <pose>1 -0.01 0.3 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.2 0.13</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Dog/materials/scripts</uri>
+              <uri>model://Dog/materials/textures</uri>
+              <name>Dog/Diffuse</name>
+            </script>
+          </material>
+        </visual>
       </link>
       <pose frame=''>0.0 1.0668021336 0 0 0 1.57079632679</pose>
     </model>
@@ -929,7 +944,7 @@
 
 
     <!--FLAG0 DEBUG-->
-    <!-- <model name='flag0'>
+    <model name='flag0'>
       <link name='plate'>
         <pose>0 0 0.2425 0 0 0</pose>
         <collision name='collision'>
@@ -963,9 +978,9 @@
           </geometry>
           <material>
             <script>
-              <uri>model://Orange/materials/scripts</uri>
-              <uri>model://Orange/materials/textures</uri>
-              <name>Orange/Diffuse</name>
+              <uri>model://Dog/materials/scripts</uri>
+              <uri>model://Dog/materials/textures</uri>
+              <name>Dog/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -1095,8 +1110,8 @@
         <child>plate</child>
         <pose>0 0 0.1 0 0 0</pose>
       </joint>
-      <pose frame=''>2 2 0.01 0.0 0.0 5.495</pose>
-    </model> -->
+      <pose frame=''>3.25 1.6 0.01 0.0 0.0 3.14159</pose>
+    </model>
 
     <!--FLAG1 APPLE -->
     <!-- <model name='flag1'>

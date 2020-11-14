@@ -45,7 +45,8 @@ def publisher():
         #            each need to have a separate marker ID.
         marker.id = 0
 
-        marker.type = 2 # sphere
+        marker.type = 2 # 2 sphere  10 mesh
+        # marker.mesh_resource="model://dog/dog.dae"
 
 
 
