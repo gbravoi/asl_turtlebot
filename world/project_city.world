@@ -883,7 +883,7 @@
 
 
     
-    <model name='Stop Sign'>
+    <!-- <model name='Stop Sign'>
       <link name='link'>
         <collision name='collision'>
           <geometry>
@@ -940,7 +940,7 @@
         <gravity>1</gravity>
       </link>
       <pose frame=''>2.09 0.6 0.0 0.0 0.0 1.57079632679</pose>
-    </model>
+    </model> -->
 
 
     <!--FLAG0 DEBUG-->

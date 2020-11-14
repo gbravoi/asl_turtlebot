@@ -7,7 +7,7 @@ from std_msgs.msg import String
 import tf
 import numpy as np
 from numpy import linalg
-from utils import wrapToPi
+from utils import wrapToPi, add_padding
 from planners import AStar, compute_smoothed_traj#,  GeometricRRT#GeometricRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
@@ -163,14 +163,20 @@ class Navigator:
         self.map_probs = msg.data
         # if we've received the map metadata and have a way to update it:
         if self.map_width>0 and self.map_height>0 and len(self.map_probs)>0:
+            #add padding
+            padding_time=1
+            padded=add_padding(padding_time, self.map_probs, self.map_height, self.map_width)
+
             self.occupancy = StochOccupancyGrid2D(self.map_resolution,
                                                   self.map_width,
                                                   self.map_height,
                                                   self.map_origin[0],
                                                   self.map_origin[1],
                                                   8,
-                                                  self.map_probs,
+                                                  padded,#self.map_probs,
                                                   0.3)
+
+
 
 
             if self.x_g is not None and self.mode!=Mode.STOP:

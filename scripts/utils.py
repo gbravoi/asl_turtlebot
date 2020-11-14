@@ -4,3 +4,26 @@ def wrapToPi(a):
     if isinstance(a, list):
         return [(x + np.pi) % (2*np.pi) - np.pi for x in a]
     return (a + np.pi) % (2*np.pi) - np.pi
+
+
+def add_padding(padding, data, height, width):
+    h=height
+    w=width
+    img = np.zeros((h, w))
+	
+    for k in range(padding):
+        for i in range(0,h):
+            for j in range(0,w):
+                if data[i*w+j]==100:#obstacle
+                    img[i,j]=100
+                    img[i+1,j]=100
+                    img[i-1,j]=100
+                    img[i+1,j+1]=100
+                    img[i+1,j-1]=100
+                    img[i-1,j+1]=100
+                    img[i-1,j-1]=100
+                    img[i,j+1]=100
+                    img[i,j-1]=100
+    
+    return list(img.flatten())
+
