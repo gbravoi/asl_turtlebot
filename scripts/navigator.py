@@ -96,8 +96,8 @@ class Navigator:
 
         #STOP SIGN PARAMETERS
         # Minimum distance from a stop sign to obey it
-        self.stop_min_dist = 1#rospy.get_param("~stop_min_dist", 0.5)
-        self.crossing_time=6
+        self.stop_min_dist =0.6#rospy.get_param("~stop_min_dist", 0.5)
+        self.crossing_time=3
         self.stop_time=3
         self.previous_mode=None
         self.stop_sign_start = None
@@ -306,9 +306,9 @@ class Navigator:
         t = self.get_current_plan_time()
         # if self.mode == Mode.CROSS:
         #     t-=self.stop_time
-        if self.mode == Mode.PARK or self.mode==Mode.CROSS:
+        if self.mode == Mode.PARK :
             V, om = self.pose_controller.compute_control(self.x, self.y, self.theta, t)
-        elif self.mode == Mode.TRACK:
+        elif self.mode == Mode.TRACK or self.mode==Mode.CROSS:
             V, om = self.traj_controller.compute_control(self.x, self.y, self.theta, t)
         elif self.mode == Mode.ALIGN:
             V, om = self.heading_controller.compute_control(self.x, self.y, self.theta, t)
@@ -437,8 +437,7 @@ class Navigator:
             self.switch_mode(Mode.PARK)
             return
         
-        if self.mode==Mode.CROSS:
-            return
+
 
         # Smooth and generate a trajectory
         traj_new, t_new = compute_smoothed_traj(planned_path, self.v_des, self.spline_alpha, self.traj_dt)
@@ -447,7 +446,7 @@ class Navigator:
         # traj_new = planned_path
 
         # If currently tracking a trajectory, check whether new trajectory will take more time to follow
-        if self.mode == Mode.TRACK:
+        if self.mode == Mode.TRACK :
             t_remaining_curr = self.current_plan_duration - self.get_current_plan_time()
 
             # Estimate duration of new trajectory
