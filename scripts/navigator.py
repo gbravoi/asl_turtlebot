@@ -18,6 +18,8 @@ from enum import Enum
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
+from planners import getfrontier #added for RRT
+
 # state machine modes, not all implemented
 class Mode(Enum):
     IDLE = 0
@@ -54,6 +56,7 @@ class Navigator:
         self.map_probs = []
         self.occupancy = None
         self.occupancy_updated = False
+        self.frontiers=None
 
         # plan parameters
         self.plan_resolution =  0.1
@@ -152,6 +155,9 @@ class Navigator:
                                                   self.map_origin[1],
                                                   8,
                                                   self.map_probs)
+            #update frontiers
+            self.frontiers=getfrontier(msg)
+
             if self.x_g is not None:
                 # if we have a goal to plan to, replan
                 rospy.loginfo("replanning because of new map")
@@ -340,7 +346,8 @@ class Navigator:
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         #problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
-        problem=GeometricRRTConnect( state_min, state_max, x_init, x_goal, self.occupancy)
+        print("map width {}, map height{}".format(self.map_width,self.map_height))
+        problem=GeometricRRTConnect( [0,0], [3,3], x_init, x_goal, self.frontiers)
 
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()

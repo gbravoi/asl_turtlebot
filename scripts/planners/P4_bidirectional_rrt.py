@@ -229,28 +229,33 @@ class RRTConnect(object):
                 #end while
             #end if
 
-
+        
 
 
 
 
         ########## Code ends here ##########
 
-        plt.figure()
-        self.plot_problem()
-        self.plot_tree(V_fw, P_fw, color="blue", linewidth=.5, label="RRTConnect forward tree")
-        self.plot_tree_backward(V_bw, P_bw, color="purple", linewidth=.5, label="RRTConnect backward tree")
+        # plt.figure()
+        # self.plot_problem()
+        # self.plot_tree(V_fw, P_fw, color="blue", linewidth=.5, label="RRTConnect forward tree")
+        # self.plot_tree_backward(V_bw, P_bw, color="purple", linewidth=.5, label="RRTConnect backward tree")
         
-        if success:
-            self.plot_path(color="green", linewidth=2, label="solution path")
-            plt.scatter(V_fw[:n_fw,0], V_fw[:n_fw,1], color="blue")
-            plt.scatter(V_bw[:n_bw,0], V_bw[:n_bw,1], color="purple")
-        else:
-            print("failed finding a path")
-        plt.scatter(V_fw[:n_fw,0], V_fw[:n_fw,1], color="blue")
-        plt.scatter(V_bw[:n_bw,0], V_bw[:n_bw,1], color="purple")
+        # if success:
+        #     self.plot_path(color="green", linewidth=2, label="solution path")
+        #     plt.scatter(V_fw[:n_fw,0], V_fw[:n_fw,1], color="blue")
+        #     plt.scatter(V_bw[:n_bw,0], V_bw[:n_bw,1], color="purple")
+        # else:
+        #     print("failed finding a path")
+        # plt.scatter(V_fw[:n_fw,0], V_fw[:n_fw,1], color="blue")
+        # plt.scatter(V_bw[:n_bw,0], V_bw[:n_bw,1], color="purple")
 
-        plt.show()
+        # plt.show()
+
+        return success
+
+
+
 
     def plot_problem(self):
         plot_line_segments(self.obstacles, color="red", linewidth=2, label="obstacles")
