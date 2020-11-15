@@ -59,6 +59,7 @@ class StochOccupancyGrid2D(object):
             for dy in range(lower,upper+1):
                 x, y = self.snap_to_grid([state[0] + dx * self.resolution, state[1] + dy * self.resolution])
                 grid_x = int((x - self.origin_x) / self.resolution)
+                #print("is free y:{} y_origin:{}  resulution:{}".format(y,self.origin_y,self.resolution))
                 grid_y = int((y - self.origin_y) / self.resolution)
                 if grid_y>0 and grid_x>0 and grid_x<self.width and grid_y<self.height:
                     p_total *= (1.0-max(0.0,float(self.probs[grid_y * self.width + grid_x])/100.0))

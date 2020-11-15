@@ -57,7 +57,7 @@ class RRT(object):
         """
         raise NotImplementedError("steer_towards must be overriden by a subclass of RRT")
 
-    def solve(self, eps=1, max_iters=1000, goal_bias=0.05, shortcut=False):
+    def solve(self, eps=0.2, max_iters=1000, goal_bias=0.05, shortcut=False):
         """
         Constructs an RRT rooted at self.x_init with the aim of producing a
         dynamically-feasible and obstacle-free trajectory from self.x_init
@@ -133,20 +133,20 @@ class RRT(object):
         
         ########## Code ends here ##########
 
-        plt.figure()
-        self.plot_problem()
-        self.plot_tree(V, P, color="blue", linewidth=.5, label="RRT tree", alpha=0.5)
-        if success:
-            if shortcut:
-                self.plot_path(color="purple", linewidth=2, label="Original solution path")
-                self.shortcut_path()
-                self.plot_path(color="green", linewidth=2, label="Shortcut solution path")
-            else:
-                self.plot_path(color="green", linewidth=2, label="Solution path")
-            plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.03), fancybox=True, ncol=3)
-            plt.scatter(V[:n,0], V[:n,1])
-        else:
-            print "Solution not found!"
+        # plt.figure()
+        # self.plot_problem()
+        # self.plot_tree(V, P, color="blue", linewidth=.5, label="RRT tree", alpha=0.5)
+        # if success:
+        #     if shortcut:
+        #         self.plot_path(color="purple", linewidth=2, label="Original solution path")
+        #         self.shortcut_path()
+        #         self.plot_path(color="green", linewidth=2, label="Shortcut solution path")
+        #     else:
+        #         self.plot_path(color="green", linewidth=2, label="Solution path")
+        #     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.03), fancybox=True, ncol=3)
+        #     plt.scatter(V[:n,0], V[:n,1])
+        # else:
+        #     print "Solution not found!"
 
         return success
 
@@ -289,12 +289,14 @@ class GeometricRRT(RRT):
             p2_x=p2_old[0]+dx
             p2_y=m*(p2_x-p2_old[0])+p2_old[1]
             p2=np.array([p2_x,p2_y])
-            print("p2",p2)
+            #print("p2",p2)
             new_p2=obstacles.snap_to_grid(p2)
             is_free=obstacles.is_free(new_p2)#check if that element in the gree has an obstacle
             if not is_free:
+                print("NOT free point {}".format(new_p2))
                 return False
             else:#update for next iteration
+                print("free point {}".format(new_p2))
                 goal_distance=np.linalg.norm(x1-x2)
                 p2_distance=np.linalg.norm(new_p2-x1)
                 p2_old=new_p2

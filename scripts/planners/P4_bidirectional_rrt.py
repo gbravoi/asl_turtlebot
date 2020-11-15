@@ -88,7 +88,7 @@ class RRTConnect(object):
         """
         raise NotImplementedError("steer_towards_backward must be overriden by a subclass of RRTConnect")
 
-    def solve(self, eps=1, max_iters = 1000):
+    def solve(self, eps=0.5, max_iters = 10000):
         """
         Uses RRT-Connect to perform bidirectional RRT, with a forward tree
         rooted at self.x_init and a backward tree rooted at self.x_goal, with
@@ -351,6 +351,10 @@ class GeometricRRTConnect(RRTConnect):
         x1=np.array([x1[0],x1[1]])
         x2=np.array([x2[0],x2[1]])
         print("start {} end {}".format(x1,x2) )
+        #is same point return true
+        if np.linalg.norm(x1-x2)<1e-7:
+            return True 
+
         #for loop to check moving resolution, p2 a point dx from x1
         dx=obstacles.resolution
         p2_old=x1 #point to keep track where we are
@@ -359,10 +363,15 @@ class GeometricRRTConnect(RRTConnect):
         m=(x2[1]-x1[1])/(x2[0]-x1[0]) #slope
         #stop while if we are farther that the point we are trying to connect
         while p2_distance<goal_distance:
-            p2_x=p2_old[0]+dx
-            p2_y=m*(p2_x-p2_old[0])+p2_old[1]
+            if m<float('Inf'):
+                p2_x=p2_old[0]+dx
+                p2_y=m*(p2_x-p2_old[0])+p2_old[1]
+            else: #vertical line
+                p2_x=p2_old[0]
+                p2_y=p2_old[1]+dx
+
             p2=np.array([p2_x,p2_y])
-            print("p2",p2)
+            #print("p2",p2)
             new_p2=obstacles.snap_to_grid(p2)
             is_free=obstacles.is_free(new_p2)#check if that element in the gree has an obstacle
             if not is_free:

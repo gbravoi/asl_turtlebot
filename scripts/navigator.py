@@ -8,7 +8,7 @@ import tf
 import numpy as np
 from numpy import linalg
 from utils import wrapToPi, add_padding
-from planners import AStar, compute_smoothed_traj#,  GeometricRRT#GeometricRRTConnect
+from planners import AStar, compute_smoothed_traj,  GeometricRRT ,GeometricRRTConnect
 from grids import StochOccupancyGrid2D
 import scipy.interpolate
 import matplotlib.pyplot as plt
@@ -385,6 +385,7 @@ class Navigator:
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))
         problem = AStar(state_min,state_max,x_init,x_goal,self.occupancy,self.plan_resolution)
+        #problem=GeometricRRT( [0,0], [3,3], x_init, x_goal, self.occupancy)
 
 
         rospy.loginfo("Navigator: computing navigation plan")
