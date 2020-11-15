@@ -90,10 +90,10 @@ class Navigator:
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 10#0.5
-        self.kpy = 10#0.5
-        self.kdx = 5#1.5
-        self.kdy = 5#1.5
+        self.kpx = 3#0.5
+        self.kpy = 3#0.5
+        self.kdx = 7#1.5
+        self.kdy = 7#1.5
 
         #lidar parameters
         self.laser_ranges = []
