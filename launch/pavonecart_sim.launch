@@ -12,7 +12,7 @@
   <!--<node pkg="asl_turtlebot" type="detector_mobilenet.py" name="turtlebot_detector"  />-->
 	<!-- <node pkg="asl_turtlebot" type="pavonecart.py" name="pavonecart"  /> -->
   <node pkg="asl_turtlebot" type="navigator.py" name="turtlebot_navigator" output="screen">
-    <param name="v_max" value="1"/>
+    <param name="v_max" value="0.4"/>
     <param name="om_max" value="1"/>
   </node>
 </launch>

@@ -24,6 +24,7 @@ def add_padding(padding, data, height, width):
                     img[i-1,j-1]=100
                     img[i,j+1]=100
                     img[i,j-1]=100
+        data=img.flatten()
     
     return list(img.flatten())
 

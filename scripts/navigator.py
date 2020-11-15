@@ -20,6 +20,8 @@ from asl_turtlebot.msg import DetectedObject, DetectedObjectList
 from dynamic_reconfigure.server import Server
 from asl_turtlebot.cfg import NavigatorConfig
 
+from sensor_msgs.msg import  LaserScan
+
 
 
 # state machine modes, not all implemented
@@ -88,10 +90,14 @@ class Navigator:
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 0.5
-        self.kpy = 0.5
-        self.kdx = 1.5
-        self.kdy = 1.5
+        self.kpx = 10#0.5
+        self.kpy = 10#0.5
+        self.kdx = 5#1.5
+        self.kdy = 5#1.5
+
+        #lidar parameters
+        self.laser_ranges = []
+        self.laser_angle_increment=0
 
         #STOP SIGN PARAMETERS
         # Minimum distance from a stop sign to obey it
@@ -124,6 +130,9 @@ class Navigator:
 
         # Stop sign detector
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
+
+        #laser scan
+        rospy.Subscriber('/scan', LaserScan, self.laser_callback)
 
         print "finished init"
         
@@ -192,6 +201,29 @@ class Navigator:
         cmd_vel.linear.x = 0.0
         cmd_vel.angular.z = 0.0
         self.nav_vel_pub.publish(cmd_vel)
+
+    def laser_callback(self, msg):
+        """ callback for thr laser rangefinder """
+
+        self.laser_ranges = list(msg.ranges)
+        self.laser_angle_increment = msg.angle_increment
+
+        #compute distance with wall
+        thetaleft=30*np.pi/180
+        thetaright=330*np.pi/180
+        distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
+
+        distance_theshold=0.2
+        stop_threshold = 0.3
+        # if distance<=stop_threshold:
+        #     self.stay_idle()
+        #     self.replan_new_goal()
+        #     print("Stop and replan because too close to an obstacle")
+        # # elif distance<=distance_theshold:
+        #     print("replan because we where close to an obstacle")
+        #     self.replan_new_goal()
+
+
 
     def stop_sign_detected_callback(self, msg):
         """ callback for when the detector has found a stop sign. Note that
@@ -550,6 +582,33 @@ class Navigator:
 
             self.publish_control()
             rate.sleep()
+
+
+#other functions
+def estimate_distance(thetaleft, thetaright, ranges,laser_angle_increment):
+    """ estimates the distance of an object in between two angles
+    using lidar measurements """
+
+    leftray_indx = min(max(0,int(thetaleft/laser_angle_increment)),len(ranges))
+    rightray_indx = min(max(0,int(thetaright/laser_angle_increment)),len(ranges))
+
+    if leftray_indx<rightray_indx:
+        meas = ranges[rightray_indx:] + ranges[:leftray_indx]
+    else:
+        meas = ranges[rightray_indx:leftray_indx]
+
+    # num_m, dist = 0, 0
+    # for m in meas:
+    #     if m>0 and m<float('Inf'):
+    #         dist += m
+    #         num_m += 1
+    # if num_m>0:
+    #     dist /= num_m
+
+    meas = np.maximum(np.zeros(len(meas)), meas)
+    dist = np.min(meas)
+
+    return dist
 
 
 if __name__ == '__main__':    
