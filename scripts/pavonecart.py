@@ -37,7 +37,7 @@ class Vendor:
         #            each need to have a separate marker ID.
         marker.id = self.marker_id
 
-        marker.type = 2# sphere
+        marker.type = 1# sphere
 
         if self.name=="dog":
             marker.type = 9
@@ -52,9 +52,9 @@ class Vendor:
         marker.pose.orientation.z = 0.0
         marker.pose.orientation.w = 1.0
 
-        marker.scale.x = 0.2
-        marker.scale.y = 0.2
-        marker.scale.z = 0.2
+        marker.scale.x = 0.1
+        marker.scale.y = 0.1
+        marker.scale.z = 0.1
 
         marker.color.a = 1
         marker.color.r = self.marker_color[0][0]

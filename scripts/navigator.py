@@ -90,10 +90,10 @@ class Navigator:
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 3#0.5
-        self.kpy = 3#0.5
-        self.kdx = 7#1.5
-        self.kdy = 7#1.5
+        self.kpx = 7#0.5
+        self.kpy = 7#0.5
+        self.kdx = 3.5#1.5
+        self.kdy = 3.5#1.5
 
         #lidar parameters
         self.laser_ranges = []
@@ -182,7 +182,7 @@ class Navigator:
                                                   self.map_origin[0],
                                                   self.map_origin[1],
                                                   8,
-                                                  padded,#self.map_probs,
+                                                  self.map_probs, #padded,#
                                                   0.3)
 
 
@@ -379,8 +379,11 @@ class Navigator:
             return
 
         # Attempt to plan a path
-        state_min = self.snap_to_grid((-self.plan_horizon, -self.plan_horizon))
-        state_max = self.snap_to_grid((self.plan_horizon, self.plan_horizon))
+        # state_min = self.snap_to_grid((-self.plan_horizon, -self.plan_horizon))
+        # state_max = self.snap_to_grid((self.plan_horizon, self.plan_horizon))
+        state_min = self.snap_to_grid((0, 0))
+        state_max = self.snap_to_grid((4, 4))
+  
         x_init = self.snap_to_grid((self.x, self.y))
         self.plan_start = x_init
         x_goal = self.snap_to_grid((self.x_g, self.y_g))

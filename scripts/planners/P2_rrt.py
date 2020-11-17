@@ -290,7 +290,7 @@ class GeometricRRT(RRT):
             p2_y=m*(p2_x-p2_old[0])+p2_old[1]
             p2=np.array([p2_x,p2_y])
             #print("p2",p2)
-            new_p2=obstacles.snap_to_grid(p2)
+            new_p2=p2#obstacles.snap_to_grid(p2)
             is_free=obstacles.is_free(new_p2)#check if that element in the gree has an obstacle
             if not is_free:
                 print("NOT free point {}".format(new_p2))

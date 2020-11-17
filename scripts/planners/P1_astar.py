@@ -195,7 +195,7 @@ class AStar(object):
         while(len(self.open_set)> 0 and counter < 1000):
             counter += 1
             x_curr = self.find_best_est_cost_through() # Gets the state in open_set that has the lowest est_cost_through
-            if x_curr == self.x_goal: # if the current state is the goal state
+            if np.max(np.abs(np.asarray(x_curr)-np.asarray(self.x_goal)))<1e-3: # if the current state is the goal state
                 self.path = self.reconstruct_path()  #Use the came_from map to reconstruct a path from the initial location to the goal location
                 return True
             self.open_set.remove(x_curr) # remove current state in open set
