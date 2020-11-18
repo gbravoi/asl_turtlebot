@@ -24,7 +24,7 @@ class Vendor:
         self.marker_id=marker_id
         self.publisher= rospy.Publisher('vendor_marker/'+name, Marker, queue_size=10)
         colors = np.random.rand(1,3)
-        print("Vendor {} created in position {}".format(self.name,self.position))
+        rospy.loginfo("Vendor {} created in position {}".format(self.name,self.position))
         self.marker_color= colors
 
     def publish_vendor_position(self):
@@ -243,7 +243,7 @@ class Supervisor:
     def delivery_request_callback(self,msg):
         self.stop_map_update.publish("stop")
         stores = msg.data.split(",") #[banana, apple]
-        print('stores:', stores)
+        rospy.loginfo('stores:', stores)
         for vendor in stores:
             if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
                 self.vendors_to_visit.append(vendor)
@@ -300,19 +300,19 @@ class Supervisor:
         self.theta = euler[2]
         if self.initial_pos[0]==-1:
             self.initial_pos=(self.x,self.y,self.theta)
-            print("INITIAL POSITION:  ", self.initial_pos)
+            rospy.loginfo("INITIAL POSITION:  ", self.initial_pos)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
         origin_frame = "/map" if self.params.mapping else "/odom"
-        print("Rviz command received!")
+        rospy.loginfo("Rviz command received!")
 
         #save old state if different from manual or iddle
         if self.mode!=Mode.MANUAL and self.mode!=Mode.IDLE:
             self.previous_goal[0]=self.x_g
             self.previous_goal[1]=self.y_g
             self.previous_goal[2]=self.theta_g
-            print("previous goal ", self.previous_goal)
+            rospy.loginfo("previous goal ", self.previous_goal)
             self.previous_mode=self.mode
             self.mode = Mode.MANUAL  #manual: used to take out the robot from being stuck
 
@@ -352,9 +352,9 @@ class Supervisor:
         if self.mode == Mode.GO_TO_VENDOR:
             self.previous_goal = (self.x_g, self.y_g, self.theta_g)
             self.remaining_way_points = list(self.way_points)
-        self.mode = Mode.WAYPOINT
+            self.mode = Mode.WAYPOINT
         if len(self.remaining_way_points)==0:
-            print("Failed at finding a path -- Tested all way points")
+            rospy.loginfo("Failed at finding a path -- Tested all way points")
             return 
         new_goal = (-1, -1, -1)
         min_distance = float("inf")
@@ -369,7 +369,7 @@ class Supervisor:
         self.remaining_way_points.remove(new_goal)
         self.x_g, self.y_g, self.theta_g = new_goal
         self.go_to_pose((self.x_g,self.y_g,self.theta_g))
-        print("send a new waypoint")
+        rospy.loginfo("send a new waypoint")
 
 
 
@@ -385,15 +385,15 @@ class Supervisor:
             self.current_vendor_index=0
             if self.current_vendor_index<len(self.vendors_to_visit):
                 self.mode=Mode.GO_TO_VENDOR
-                print("New state: GO_TO_VENDOR")
+                rospy.loginfo("New state: GO_TO_VENDOR")
                 vendor_name=self.vendors_to_visit[self.current_vendor_index]
-                print("Go to vendor ",vendor_name)
+                rospy.loginfo("Go to vendor ",vendor_name)
                 vendor=self.vendor_dic[vendor_name]
                 #vendor position
                 self.x_g=vendor.position[0]
                 self.y_g=vendor.position[1]
                 self.theta_g=0
-                print("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
+                rospy.loginfo("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
 
 
 
@@ -402,13 +402,13 @@ class Supervisor:
 
         if self.current_vendor_index<len(self.vendors_to_visit):
             vendor_name=self.vendors_to_visit[self.current_vendor_index]
-            print("Go to vendor: ",vendor_name)
+            rospy.loginfo("Go to vendor: ",vendor_name)
             vendor=self.vendor_dic[vendor_name]
             #vendor position
             self.x_g=vendor.position[0]
             self.y_g=vendor.position[1]
             self.theta_g=0
-            print("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
+            rospy.loginfo("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
             return True
         else: #we dont have more vendors to go
             return False
@@ -441,7 +441,7 @@ class Supervisor:
         self.pose_goal_publisher.publish(nav_g_msg)
 
     def init_idle(self):
-        print("New state: IDLE")
+        rospy.loginfo("New state: IDLE")
         self.stay_idle()
         self.mode=Mode.IDLE
 
@@ -483,7 +483,7 @@ class Supervisor:
         """ initiates wait on vendor """
         self.wait_on_vendor_start = rospy.get_rostime()
         self.mode = Mode.WAIT_ON_VENDOR
-        print("New state: WAIT_ON_VENDOR")
+        rospy.loginfo("New state: WAIT_ON_VENDOR")
 
     
 
@@ -542,11 +542,11 @@ class Supervisor:
 
         if self.mode == Mode.IDLE:
             # Send zero velocity
-            # print("IDLE")
+            # rospy.loginfo("IDLE")
             self.stay_idle()
             
         elif self.mode == Mode.POSE:
-            print("POSE")
+            # rospy.loginfo("POSE")
             if self.has_crossed():
                 self.mode=self.previous_mode
             # else:
@@ -557,7 +557,7 @@ class Supervisor:
             #         self.go_to_pose()
 
         elif self.mode == Mode.STOP:
-            print("STOP")
+            # rospy.loginfo("STOP")
             # At a stop sign
             if self.has_stopped():
                 self.init_crossing()
@@ -565,12 +565,12 @@ class Supervisor:
                 self.stay_idle()
 
         elif self.mode == Mode.CROSS:
-            print("CROSS")
+            # rospy.loginfo("CROSS")
             # Crossing an intersection
             self.mode=Mode.POSE
 
         elif self.mode == Mode.EXPLORE:
-            # print("EXPLORE")
+            # rospy.loginfo("EXPLORE")
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 if len(self.explore_points)>0:
                     point = self.explore_points.pop(0)
@@ -582,7 +582,7 @@ class Supervisor:
                 self.go_to_pose((self.x_g,self.y_g,self.theta_g))
 
         elif self.mode==Mode.GO_TO_VENDOR:
-            # print("GO_TO_VENDOR")
+            # rospy.loginfo("GO_TO_VENDOR")
             self.go_to_pose((self.x_g,self.y_g,self.theta_g))
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 self.init_wait_on_vendor()
@@ -592,7 +592,7 @@ class Supervisor:
                 self.x_g=self.previous_goal[0]
                 self.y_g=self.previous_goal[1]
                 self.theta_g=self.previous_goal[2]
-                print("going again to vendor {} {} {}".format(self.x_g,self.y_g,self.theta_g))
+                rospy.loginfo("going again to vendor {} {} {}".format(self.x_g,self.y_g,self.theta_g))
                 self.mode=Mode.GO_TO_VENDOR
                 self.go_to_pose(self.previous_goal)
 
@@ -607,7 +607,7 @@ class Supervisor:
                     #clean list of visited vendor
                     self.vendors_to_visit=[]
                     self.mode = Mode.DELIVER 
-                    print("New state: DELIVER")
+                    rospy.loginfo("New state: DELIVER")
         
         elif self.mode==Mode.DELIVER:
             #go to initial position 
@@ -625,7 +625,7 @@ class Supervisor:
                     self.x_g=self.previous_goal[0]
                     self.y_g=self.previous_goal[1]
                     self.theta_g=self.previous_goal[2]
-                    print("going again to previous goal goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
+                    rospy.loginfo("going again to previous goal goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
                     self.mode=self.previous_mode
                     self.go_to_pose(self.previous_goal)
 

@@ -78,6 +78,7 @@ class Navigator:
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
+        self.theta_start_thresh_tracking = 3.14
         self.start_pos_thresh = 0.1    # threshold to be far enough into the plan to recompute it
 
         # threshold at which navigator switches from trajectory to pose control
@@ -86,14 +87,14 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.015
+        self.spline_alpha = 0.011#0.015
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 10#0.5
-        self.kpy = 10#0.5
-        self.kdx = 5#1.5
-        self.kdy = 5#1.5
+        self.kpx = 0.5#0.5
+        self.kpy = 0.5#0.5
+        self.kdx = 0.001#1.5
+        self.kdy = 0.001#1.5
 
         #lidar parameters
         self.laser_ranges = []
@@ -160,9 +161,10 @@ class Navigator:
             self.x_g = data.x
             self.y_g = data.y
             self.theta_g = data.theta
-            print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
+            rospy.loginfo("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
             #self.replan()
-            self.mode=Mode.IDLE
+            self.switch_mode(Mode.IDLE)
+            self.stay_idle()
             self.replan_new_goal()
 
     def stop_map_callback(self, msg):
@@ -312,7 +314,14 @@ class Navigator:
         (enough to switch to tracking controller)
         """
         return (abs(wrapToPi(self.theta - self.th_init)) < self.theta_start_thresh)
-        
+    
+    def aligned_while_tracking(self):
+        """
+        returns whether robot is aligned with starting direction of path
+        (enough to switch to tracking controller)
+        """
+        return (abs(wrapToPi(self.theta - self.th_init)) < self.theta_start_thresh_tracking)
+
     def close_to_plan_start(self):
         return (abs(self.x - self.plan_start[0]) < self.start_pos_thresh and abs(self.y - self.plan_start[1]) < self.start_pos_thresh)
 
@@ -415,6 +424,8 @@ class Navigator:
                 if self.way_point_counter<=0:
                     self.find_way_points_pub.publish(True)
                     self.way_point_counter=self.way_point_counter_max
+                    self.switch_mode(Mode.IDLE)#in case we where in parking mode
+                    self.stay_idle()
                 else:
                     self.way_point_counter-=1
 
@@ -584,6 +595,9 @@ class Navigator:
             elif self.mode == Mode.TRACK:
                 if self.near_goal():
                     self.switch_mode(Mode.PARK)
+                    #check if aligned
+                elif not self.aligned_while_tracking():
+                     self.switch_mode(Mode.ALIGN)
                 elif not self.close_to_plan_start():
                     rospy.loginfo("replanning because far from start")
                     self.replan()
