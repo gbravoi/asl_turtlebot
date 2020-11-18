@@ -203,7 +203,7 @@ class Navigator:
                                                     self.map_origin[0],
                                                     self.map_origin[1],
                                                     8,
-                                                    padded,#self.map_probs, 
+                                                   self.map_probs, # padded,
                                                     0.3)
 
 
@@ -229,18 +229,18 @@ class Navigator:
         self.laser_ranges = list(msg.ranges)
         self.laser_angle_increment = msg.angle_increment
 
-        #compute distance with wall
-        # thetaleft=10*np.pi/180
-        # thetaright=350*np.pi/180
-        # distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
+        # compute distance with wall
+        thetaleft=10*np.pi/180
+        thetaright=350*np.pi/180
+        distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
 
-        # stop_threshold = 0.2
-        # # if distance<=stop_threshold and self.mode!=Mode.ALIGN and not self.going_out_from_wall:
-        #     self.stay_idle()
-        #     self.switch_mode(Mode.IDLE)
-        #     self.replan_new_goal()
-        #     print("Stop and replan because too close to an obstacle")
-        #     self.going_out_from_wall=True
+        stop_threshold = 0.2
+        if distance<=stop_threshold and self.mode!=Mode.ALIGN and not self.going_out_from_wall:
+            self.stay_idle()
+            self.switch_mode(Mode.IDLE)
+            self.replan_new_goal()
+            print("Stop and replan because too close to an obstacle")
+            self.going_out_from_wall=True
 
 
 
