@@ -75,6 +75,8 @@ class Navigator:
         # Robot limits
         self.v_max = rospy.get_param("~v_max", 0.2)    # maximum velocity
         self.om_max = rospy.get_param("~om_max", 0.4)   # maximum angular velocity
+        self.om_max_traj =self.om_max*0.6
+
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
@@ -87,18 +89,19 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.011#0.015
+        self.spline_alpha = 0.009#0.011#0.015
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
-        self.kpx = 0.5#0.5
-        self.kpy = 0.5#0.5
+        self.kpx = 0.3#0.5
+        self.kpy = 0.3#0.5
         self.kdx = 0.001#1.5
         self.kdy = 0.001#1.5
 
         #lidar parameters
         self.laser_ranges = []
         self.laser_angle_increment=0
+        self.going_out_from_wall=False
 
         #waypoints counter
         self.way_point_counter_max=3
@@ -114,9 +117,9 @@ class Navigator:
         self.cross_start= None
 
         # heading controller parameters
-        self.kp_th = 2.
+        self.kp_th = 2
 
-        self.traj_controller = TrajectoryTracker(self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max)
+        self.traj_controller = TrajectoryTracker(self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max_traj)
         self.pose_controller = PoseController(0.4, 0.8, 0.8, self.v_max, self.om_max)
         self.heading_controller = HeadingController(self.kp_th, self.om_max)
 
@@ -227,19 +230,18 @@ class Navigator:
         self.laser_angle_increment = msg.angle_increment
 
         #compute distance with wall
-        thetaleft=30*np.pi/180
-        thetaright=330*np.pi/180
-        distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
+        # thetaleft=10*np.pi/180
+        # thetaright=350*np.pi/180
+        # distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
 
-        distance_theshold=0.2
-        stop_threshold = 0.3
-        # if distance<=stop_threshold:
+        # stop_threshold = 0.2
+        # # if distance<=stop_threshold and self.mode!=Mode.ALIGN and not self.going_out_from_wall:
         #     self.stay_idle()
+        #     self.switch_mode(Mode.IDLE)
         #     self.replan_new_goal()
         #     print("Stop and replan because too close to an obstacle")
-        # # elif distance<=distance_theshold:
-        #     print("replan because we where close to an obstacle")
-        #     self.replan_new_goal()
+        #     self.going_out_from_wall=True
+
 
 
 
@@ -600,9 +602,11 @@ class Navigator:
                      self.switch_mode(Mode.ALIGN)
                 elif not self.close_to_plan_start():
                     rospy.loginfo("replanning because far from start")
+                    self.going_out_from_wall=False
                     self.replan()
                 elif (rospy.get_rostime() - self.current_plan_start_time).to_sec() > self.current_plan_duration:
                     rospy.loginfo("replanning because out of time")
+                    self.going_out_from_wall=False
                     self.replan() # we aren't near the goal but we thought we should have been, so replan
             elif self.mode == Mode.PARK:
                 if self.at_goal():
