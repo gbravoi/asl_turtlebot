@@ -362,7 +362,10 @@ class Supervisor:
         for point in self.remaining_way_points:
             curr_point = np.array([point[0], point[1]])
             dist = np.linalg.norm(goal-curr_point)
-            if dist < min_distance:
+            robot_position=np.array(self.x,self.y,self.theta)
+            dist_own= np.linalg.norm(robot_position-curr_point) #compare with robot position, need to be far away
+            #otherwise, it will enter a lopp where always goes to that point
+            if dist < min_distance and dist_own>0.5:
                 new_goal = point
                 min_distance = dist
 

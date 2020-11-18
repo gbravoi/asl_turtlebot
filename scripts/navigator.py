@@ -203,7 +203,7 @@ class Navigator:
                                                     self.map_origin[0],
                                                     self.map_origin[1],
                                                     8,
-                                                   self.map_probs, # padded,
+                                                    padded, #self.map_probs, #
                                                     0.3)
 
 
