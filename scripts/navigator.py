@@ -75,7 +75,7 @@ class Navigator:
         # Robot limits
         self.v_max = rospy.get_param("~v_max", 0.2)    # maximum velocity
         self.om_max = rospy.get_param("~om_max", 0.4)   # maximum angular velocity
-        self.om_max_traj =self.om_max*0.3 #limit angular speed in tray to not overshoot.
+        self.om_max_traj =self.om_max*0.4 #limit angular speed in tray to not overshoot.
 
 
         self.v_des = 0.12   # desired cruising velocity
@@ -95,8 +95,8 @@ class Navigator:
         # trajectory tracking controller parameters
         self.kpx = 0.3#0.5
         self.kpy = 0.3#0.5
-        self.kdx = 0.001#1.5
-        self.kdy = 0.001#1.5
+        self.kdx = 0.6 #0.001#1.5
+        self.kdy = 0.6 #0.001#1.5
 
         #lidar parameters
         self.laser_ranges = []
