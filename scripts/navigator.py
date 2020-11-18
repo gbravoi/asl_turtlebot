@@ -75,12 +75,12 @@ class Navigator:
         # Robot limits
         self.v_max = rospy.get_param("~v_max", 0.2)    # maximum velocity
         self.om_max = rospy.get_param("~om_max", 0.4)   # maximum angular velocity
-        self.om_max_traj =self.om_max*0.4 #limit angular speed in tray to not overshoot.
+        self.om_max_traj =self.om_max*0.3 #limit angular speed in tray to not overshoot.
 
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
-        self.theta_start_thresh_tracking = 0.53 #if deviate more tha  this angle for this, will recompute to align
+        self.theta_start_thresh_tracking = 0.6#0.53 #if deviate more tha  this angle for this, will recompute to align
         self.start_pos_thresh = 0.1    # threshold to be far enough into the plan to recompute it
 
         # threshold at which navigator switches from trajectory to pose control
@@ -203,7 +203,7 @@ class Navigator:
                                                     self.map_origin[0],
                                                     self.map_origin[1],
                                                     8,
-                                                    self.map_probs, #padded,#
+                                                    padded,#self.map_probs, 
                                                     0.3)
 
 
@@ -331,6 +331,8 @@ class Navigator:
         return (self.plan_resolution*round(x[0]/self.plan_resolution), self.plan_resolution*round(x[1]/self.plan_resolution))
 
     def switch_mode(self, new_mode):
+        if new_mode==Mode.IDLE:
+            self.stay_idle()
         if self.mode!=Mode.CROSS:
             rospy.loginfo("Switching from %s -> %s", self.mode, new_mode)
             self.mode = new_mode
@@ -536,16 +538,24 @@ class Navigator:
         if self.mode == Mode.TRACK :
             t_remaining_curr = self.current_plan_duration - self.get_current_plan_time()
 
-            # Estimate duration of new trajectory
-            th_init_new = traj_new[0,2]
-            th_err = wrapToPi(th_init_new - self.theta)
-            t_init_align = abs(th_err/self.om_max)
-            t_remaining_new = t_init_align + t_new[-1]
+            #check if i{m in the desired state
+            desired_state=self.traj_controller.get_desired_state( self.get_current_plan_time())[0:3]
+            print("desired", desired_state)
+            x_curr=np.array([self.x,self.y,self.theta])
 
-            if t_remaining_new > t_remaining_curr:
-                rospy.loginfo("New plan rejected (longer duration than current plan)")
-                self.publish_smoothed_path(traj_new, self.nav_smoothed_path_rej_pub)
-                return
+            if np.max(np.abs(x_curr-np.asarray(desired_state)))<1e-2:
+                rospy.loginfo("choose new plan because far away from the original plan")
+            else:
+                # Estimate duration of new trajectory
+                th_init_new = traj_new[0,2]
+                th_err = wrapToPi(th_init_new - self.theta)
+                t_init_align = abs(th_err/self.om_max)
+                t_remaining_new = t_init_align + t_new[-1]
+
+                if t_remaining_new > t_remaining_curr:
+                    rospy.loginfo("New plan rejected (longer duration than current plan)")
+                    self.publish_smoothed_path(traj_new, self.nav_smoothed_path_rej_pub)
+                    return
 
         # Otherwise follow the new plan
         self.publish_planned_path(planned_path, self.nav_planned_path_pub)
