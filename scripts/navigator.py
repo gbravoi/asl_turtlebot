@@ -3,7 +3,7 @@
 import rospy
 from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
 from geometry_msgs.msg import Twist, Pose2D, PoseStamped
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 import tf
 import numpy as np
 from numpy import linalg
@@ -22,7 +22,7 @@ from asl_turtlebot.cfg import NavigatorConfig
 
 from sensor_msgs.msg import  LaserScan
 
-
+STOP_MAP_UPDATE = False
 
 # state machine modes, not all implemented
 class Mode(Enum):
@@ -99,6 +99,10 @@ class Navigator:
         self.laser_ranges = []
         self.laser_angle_increment=0
 
+        #waypoints counter
+        self.way_point_counter_max=3
+        self.way_point_counter=self.way_point_counter_max
+
         #STOP SIGN PARAMETERS
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist =0.6#rospy.get_param("~stop_min_dist", 0.5)
@@ -119,6 +123,7 @@ class Navigator:
         self.nav_smoothed_path_pub = rospy.Publisher('/cmd_smoothed_path', Path, queue_size=10)
         self.nav_smoothed_path_rej_pub = rospy.Publisher('/cmd_smoothed_path_rejected', Path, queue_size=10)
         self.nav_vel_pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
+        self.find_way_points_pub = rospy.Publisher('/find_way_points', Bool, queue_size=10)
 
         self.trans_listener = tf.TransformListener()
 
@@ -127,6 +132,9 @@ class Navigator:
         rospy.Subscriber('/map', OccupancyGrid, self.map_callback)
         rospy.Subscriber('/map_metadata', MapMetaData, self.map_md_callback)
         rospy.Subscriber('/cmd_nav', Pose2D, self.cmd_nav_callback)
+
+        #stop map update
+        rospy.Subscriber('/stop_map_update', String, self.stop_map_callback)
 
         # Stop sign detector
         rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -154,12 +162,19 @@ class Navigator:
             self.theta_g = data.theta
             print("new goal {} {} {}".format(self.x_g,self.y_g,self.theta_g))
             #self.replan()
+            self.mode=Mode.IDLE
             self.replan_new_goal()
+
+    def stop_map_callback(self, msg):
+        if msg == "stop":
+            STOP_MAP_UPDATE = True
 
     def map_md_callback(self, msg):
         """
         receives maps meta data and stores it
         """
+        if STOP_MAP_UPDATE:
+            return
         self.map_width = msg.width
         self.map_height = msg.height
         self.map_resolution = msg.resolution
@@ -172,18 +187,19 @@ class Navigator:
         self.map_probs = msg.data
         # if we've received the map metadata and have a way to update it:
         if self.map_width>0 and self.map_height>0 and len(self.map_probs)>0:
-            #add padding
-            padding_time=1
-            padded=add_padding(padding_time, self.map_probs, self.map_height, self.map_width)
+            if not STOP_MAP_UPDATE:
+                #add padding
+                padding_time=1
+                padded=add_padding(padding_time, self.map_probs, self.map_height, self.map_width)
 
-            self.occupancy = StochOccupancyGrid2D(self.map_resolution,
-                                                  self.map_width,
-                                                  self.map_height,
-                                                  self.map_origin[0],
-                                                  self.map_origin[1],
-                                                  8,
-                                                  self.map_probs, #padded,#
-                                                  0.3)
+                self.occupancy = StochOccupancyGrid2D(self.map_resolution,
+                                                    self.map_width,
+                                                    self.map_height,
+                                                    self.map_origin[0],
+                                                    self.map_origin[1],
+                                                    8,
+                                                    self.map_probs, #padded,#
+                                                    0.3)
 
 
 
@@ -392,8 +408,16 @@ class Navigator:
 
 
         rospy.loginfo("Navigator: computing navigation plan")
-        success =  False
+        success =  problem.solve()
+
         if not success:
+            if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK: 
+                if self.way_point_counter<=0:
+                    self.find_way_points_pub.publish(True)
+                    self.way_point_counter=self.way_point_counter_max
+                else:
+                    self.way_point_counter-=1
+
             rospy.loginfo("Planning failed")
             return
         rospy.loginfo("Planning Succeeded")
@@ -468,6 +492,12 @@ class Navigator:
         rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
         if not success:
+            if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK:  
+                if self.way_point_counter<=0:
+                    self.find_way_points_pub.publish(True)
+                    self.way_point_counter=self.way_point_counter_max
+                else:
+                    self.way_point_counter-=1
             rospy.loginfo("Planning failed")
             return
         rospy.loginfo("Planning Succeeded")

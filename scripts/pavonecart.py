@@ -6,7 +6,7 @@ import rospy
 from asl_turtlebot.msg import DetectedObject
 from gazebo_msgs.msg import ModelStates
 from geometry_msgs.msg import Twist, PoseArray, Pose2D, PoseStamped
-from std_msgs.msg import Float32MultiArray, String
+from std_msgs.msg import Float32MultiArray, String, Bool
 from asl_turtlebot.msg import DetectedObject, DetectedObjectList
 from visualization_msgs.msg import Marker
 import numpy as np
@@ -88,6 +88,7 @@ class Mode(Enum):
     WAIT_ON_VENDOR=8
     DELIVER=9
     STUCK=10
+    WAYPOINT = 11
 
 
 
@@ -168,7 +169,17 @@ class Supervisor:
             (2.2, 1.6, 0), #by orange 
             (1.5, 1.5, 0),
         ]
-         
+
+        #waypoints for getting unstuck
+        self.way_points = [
+            (2.4,0.3,0),
+            (2.4,2.7,0),
+            (2.4,1.5,0),
+            (0.3,1.5,0)
+        ]
+
+        self.remaining_way_points = []
+
         # Goal state
         self.x_g = None
         self.y_g = None
@@ -189,6 +200,9 @@ class Supervisor:
         # Command pose for controller
         self.pose_goal_publisher = rospy.Publisher('/cmd_nav', Pose2D, queue_size=10)
 
+        #Stop remaking map after we're done exploring
+        self.stop_map_update = rospy.Publisher('/stop_map_update', String, queue_size=10)
+
         # Command vel (used for idling)
         #self.cmd_vel_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
@@ -200,6 +214,9 @@ class Supervisor:
 
         #find dog
         rospy.Subscriber('/detector/dog', DetectedObject, self.dog_detected_callback)
+
+        #find way points
+        rospy.Subscriber('/find_way_points', Bool, self.find_way_points_callback)
 
 
         # # Stop sign detector
@@ -224,6 +241,7 @@ class Supervisor:
 
     ########## SUBSCRIBER CALLBACKS ##########
     def delivery_request_callback(self,msg):
+        self.stop_map_update.publish("stop")
         stores = msg.data.split(",") #[banana, apple]
         print('stores:', stores)
         for vendor in stores:
@@ -329,6 +347,29 @@ class Supervisor:
         # if close enough and in nav mode, stop
         if dist > 0 and dist < self.params.stop_min_dist and self.mode == Mode.NAV:
             self.init_stop_sign()
+
+    def find_way_points_callback(self, msg):
+        if self.mode == Mode.GO_TO_VENDOR:
+            self.previous_goal = (self.x_g, self.y_g, self.theta_g)
+            self.remaining_way_points = list(self.way_points)
+        self.mode = Mode.WAYPOINT
+        if len(self.remaining_way_points)==0:
+            print("Failed at finding a path -- Tested all way points")
+            return 
+        new_goal = (-1, -1, -1)
+        min_distance = float("inf")
+        goal = np.array([self.x_g, self.y_g])
+        for point in self.remaining_way_points:
+            curr_point = np.array([point[0], point[1]])
+            dist = np.linalg.norm(goal-curr_point)
+            if dist < min_distance:
+                new_goal = point
+                min_distance = dist
+
+        self.remaining_way_points.remove(new_goal)
+        self.x_g, self.y_g, self.theta_g = new_goal
+        self.go_to_pose((self.x_g,self.y_g,self.theta_g))
+        print("send a new waypoint")
 
 
 
@@ -546,7 +587,14 @@ class Supervisor:
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 self.init_wait_on_vendor()
 
-
+        elif self.mode == Mode.WAYPOINT:
+            if self.close_to(self.x_g,self.y_g,self.theta_g):
+                self.x_g=self.previous_goal[0]
+                self.y_g=self.previous_goal[1]
+                self.theta_g=self.previous_goal[2]
+                print("going again to vendor {} {} {}".format(self.x_g,self.y_g,self.theta_g))
+                self.mode=Mode.GO_TO_VENDOR
+                self.go_to_pose(self.previous_goal)
 
         elif self.mode==Mode.WAIT_ON_VENDOR:
             self.stay_idle()
