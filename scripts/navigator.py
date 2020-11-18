@@ -75,12 +75,12 @@ class Navigator:
         # Robot limits
         self.v_max = rospy.get_param("~v_max", 0.2)    # maximum velocity
         self.om_max = rospy.get_param("~om_max", 0.4)   # maximum angular velocity
-        self.om_max_traj =self.om_max*0.6
+        self.om_max_traj =self.om_max*0.3 #limit angular speed in tray to not overshoot.
 
 
         self.v_des = 0.12   # desired cruising velocity
         self.theta_start_thresh = 0.05   # threshold in theta to start moving forward when path-following
-        self.theta_start_thresh_tracking = 3.14
+        self.theta_start_thresh_tracking = 0.53 #if deviate more tha  this angle for this, will recompute to align
         self.start_pos_thresh = 0.1    # threshold to be far enough into the plan to recompute it
 
         # threshold at which navigator switches from trajectory to pose control
@@ -89,7 +89,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.009#0.011#0.015
+        self.spline_alpha = 0.009#0.011#0.015 #decreasing this number becomes more similar to yellow, but at some point is an aproximation of a lot of small curves, and this make the system fail
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -117,7 +117,7 @@ class Navigator:
         self.cross_start= None
 
         # heading controller parameters
-        self.kp_th = 2
+        self.kp_th = 5#2
 
         self.traj_controller = TrajectoryTracker(self.kpx, self.kpy, self.kdx, self.kdy, self.v_max, self.om_max_traj)
         self.pose_controller = PoseController(0.4, 0.8, 0.8, self.v_max, self.om_max)
@@ -599,7 +599,9 @@ class Navigator:
                     self.switch_mode(Mode.PARK)
                     #check if aligned
                 elif not self.aligned_while_tracking():
-                     self.switch_mode(Mode.ALIGN)
+                     self.switch_mode(Mode.IDLE)
+                     self.stay_idle()
+                     self.replan_new_goal()
                 elif not self.close_to_plan_start():
                     rospy.loginfo("replanning because far from start")
                     self.going_out_from_wall=False
