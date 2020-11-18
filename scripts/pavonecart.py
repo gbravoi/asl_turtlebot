@@ -243,7 +243,7 @@ class Supervisor:
     def delivery_request_callback(self,msg):
         self.stop_map_update.publish("stop")
         stores = msg.data.split(",") #[banana, apple]
-        rospy.loginfo('stores:', stores)
+        print('stores:', stores)
         for vendor in stores:
             if vendor in self.vendor_dic and vendor not in self.vendors_to_visit:
                 self.vendors_to_visit.append(vendor)
@@ -300,7 +300,7 @@ class Supervisor:
         self.theta = euler[2]
         if self.initial_pos[0]==-1:
             self.initial_pos=(self.x,self.y,self.theta)
-            rospy.loginfo("INITIAL POSITION:  ", self.initial_pos)
+            print("INITIAL POSITION:  ", self.initial_pos)
 
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
@@ -312,7 +312,7 @@ class Supervisor:
             self.previous_goal[0]=self.x_g
             self.previous_goal[1]=self.y_g
             self.previous_goal[2]=self.theta_g
-            rospy.loginfo("previous goal ", self.previous_goal)
+            print("previous goal ", self.previous_goal)
             self.previous_mode=self.mode
             self.mode = Mode.MANUAL  #manual: used to take out the robot from being stuck
 
@@ -387,7 +387,7 @@ class Supervisor:
                 self.mode=Mode.GO_TO_VENDOR
                 rospy.loginfo("New state: GO_TO_VENDOR")
                 vendor_name=self.vendors_to_visit[self.current_vendor_index]
-                rospy.loginfo("Go to vendor ",vendor_name)
+                print("Go to vendor ",vendor_name)
                 vendor=self.vendor_dic[vendor_name]
                 #vendor position
                 self.x_g=vendor.position[0]
@@ -402,7 +402,7 @@ class Supervisor:
 
         if self.current_vendor_index<len(self.vendors_to_visit):
             vendor_name=self.vendors_to_visit[self.current_vendor_index]
-            rospy.loginfo("Go to vendor: ",vendor_name)
+            print("Go to vendor: ",vendor_name)
             vendor=self.vendor_dic[vendor_name]
             #vendor position
             self.x_g=vendor.position[0]
@@ -533,7 +533,7 @@ class Supervisor:
 
         # logs the current mode
         if self.prev_mode != self.mode:
-            rospy.loginfo("Current mode: %s", self.mode)
+            print("Current mode: %s", self.mode)
             self.prev_mode = self.mode
 
         ########## Code starts here ##########
