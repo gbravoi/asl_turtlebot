@@ -181,13 +181,13 @@ class Supervisor:
         ]
 
         # waypoints for getting unstuck
-        self.way_points = [
-            (2.4,0.3,0),
-            (2.4,2.7,0),
-            (2.4,1.5,0),
-            (0.3,1.5,0)
-        ]
-        # self.way_points = []
+        # self.way_points = [
+        #     (2.4,0.3,0),
+        #     (2.4,2.7,0),
+        #     (2.4,1.5,0),
+        #     (0.3,1.5,0)
+        # ]
+        self.way_points = []
 
         self.remaining_way_points = []
 
@@ -277,7 +277,7 @@ class Supervisor:
             vendor_message=msg.ob_msgs[i]
             distance=vendor_message.distance
             if vendor_name not in ["stop_sign"]:
-                if False and vendor_name == "potted_plant":
+                if vendor_name == "potted_plant":
                     robot_pos=(self.x, self.y , self.theta)
                     position=get_position_of_vendor(robot_pos, vendor_message)
                     position_array = np.array([position[0], position[1]])
@@ -387,8 +387,8 @@ class Supervisor:
         robot_position=np.array([self.x,self.y])
         goal = np.array([self.x_g, self.y_g])
         for point in self.remaining_way_points:
-            # curr_point = np.array([point.position[0], point.position[1]])
-            curr_point = np.array([point[0], point[1]])
+            curr_point = np.array([point.position[0], point.position[1]])
+            # curr_point = np.array([point[0], point[1]])
             dist = np.linalg.norm(goal-curr_point)
             dist_own= np.linalg.norm(robot_position-curr_point) #compare with robot position, need to be far away
             #otherwise, it will enter a loop where always goes to that point
@@ -397,7 +397,7 @@ class Supervisor:
                 min_distance = dist
 
         self.remaining_way_points.remove(new_goal)
-        self.x_g, self.y_g, self.theta_g = new_goal#.position
+        self.x_g, self.y_g, self.theta_g = new_goal.position
         self.go_to_pose((self.x_g,self.y_g,self.theta_g))
         rospy.loginfo("send a new waypoint")
 
@@ -681,8 +681,8 @@ class Supervisor:
                 #print(vendor.name)
                 vendor.publish_vendor_position()
 
-            # for tree in self.way_points:
-            #     tree.publish_vendor_position()
+            for tree in self.way_points:
+                tree.publish_vendor_position()
 
             rate.sleep()
 
