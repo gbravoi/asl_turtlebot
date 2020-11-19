@@ -202,9 +202,9 @@ class Navigator:
                                                     self.map_height,
                                                     self.map_origin[0],
                                                     self.map_origin[1],
-                                                    8,
+                                                    4,#8,
                                                     padded, #self.map_probs, #
-                                                    0.3)
+                                                    0.5)
 
 
 
@@ -230,8 +230,8 @@ class Navigator:
         self.laser_angle_increment = msg.angle_increment
 
         # compute distance with wall
-        thetaleft=10*np.pi/180
-        thetaright=350*np.pi/180
+        thetaleft=30*np.pi/180
+        thetaright=330*np.pi/180
         distance=estimate_distance(thetaleft, thetaright, self.laser_ranges,self.laser_angle_increment)
 
         stop_threshold = 0.2
@@ -610,11 +610,11 @@ class Navigator:
                 if self.near_goal():
                     self.switch_mode(Mode.PARK)
                     #check if aligned
-                elif not self.aligned_while_tracking():
-                    rospy.loginfo("replanning aligmnet is wrong")
-                    self.switch_mode(Mode.IDLE)
-                    self.stay_idle()
-                    self.replan_new_goal()
+                # elif not self.aligned_while_tracking():
+                #     rospy.loginfo("replanning aligmnet is wrong")
+                #     self.switch_mode(Mode.IDLE)
+                #     self.stay_idle()
+                #     self.replan_new_goal()
                 elif not self.close_to_plan_start():
                     rospy.loginfo("replanning because far from start")
                     self.going_out_from_wall=False
