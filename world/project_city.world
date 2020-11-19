@@ -309,7 +309,7 @@
           </material>
         </visual>
         <visual name='visual2'>
-          <pose>-1 -0.01 0.3 0 0 1.57079632679</pose>
+          <pose>0 -0.01 0.3 0 0 1.57079632679</pose>
           <geometry>
             <box>
               <size>0.001 0.3 0.195</size>

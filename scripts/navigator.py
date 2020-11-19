@@ -424,14 +424,15 @@ class Navigator:
         success =  problem.solve()
 
         if not success:
-            if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK: 
-                if self.way_point_counter<=0:
-                    # self.find_way_points_pub.publish(True)
-                    self.way_point_counter=self.way_point_counter_max
-                    self.switch_mode(Mode.IDLE)#in case we where in parking mode
-                    self.stay_idle()
-                else:
-                    self.way_point_counter-=1
+            #for waypoints
+            # if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK: 
+            #     if self.way_point_counter<=0:
+            #         # self.find_way_points_pub.publish(True)
+            #         self.way_point_counter=self.way_point_counter_max
+            #         self.switch_mode(Mode.IDLE)#in case we where in parking mode
+            #         self.stay_idle()
+            #     else:
+            #         self.way_point_counter-=1
 
             rospy.loginfo("Planning failed")
             return
@@ -507,12 +508,13 @@ class Navigator:
         # rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
         if not success:
-            if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK:  
-                if self.way_point_counter<=0:
-                    # self.find_way_points_pub.publish(True)
-                    self.way_point_counter=self.way_point_counter_max
-                else:
-                    self.way_point_counter-=1
+            #waypoints
+            # if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK:  
+            #     if self.way_point_counter<=0:
+            #         # self.find_way_points_pub.publish(True)
+            #         self.way_point_counter=self.way_point_counter_max
+            #     else:
+            #         self.way_point_counter-=1
             rospy.loginfo("Planning failed")
             return
         rospy.loginfo("Planning Succeeded")

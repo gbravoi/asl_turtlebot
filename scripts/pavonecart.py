@@ -236,7 +236,7 @@ class Supervisor:
         rospy.Subscriber('/detector/dog', DetectedObject, self.dog_detected_callback)
 
         #find way points
-        rospy.Subscriber('/find_way_points', Bool, self.find_way_points_callback)
+        #rospy.Subscriber('/find_way_points', Bool, self.find_way_points_callback)
 
         #occupancy grid
         rospy.Subscriber('/map', OccupancyGrid, self.map_callback)
@@ -311,46 +311,52 @@ class Supervisor:
         """
         # pass
         list_vendors_i_see=msg.objects #list of string
-        #print("vendors we are seeing: ",list_vendors_i_see)
-        #check if what we saw is something new
-        for i in range(len(list_vendors_i_see)):
-            vendor_name=list_vendors_i_see[i]
-            #extract information from the message
-            vendor_message=msg.ob_msgs[i]
-            distance=vendor_message.distance
-            if vendor_name not in ["stop_sign"]:
-                if False and vendor_name == "potted_plant":
-                    robot_pos=(self.x, self.y , self.theta)
-                    position=self.get_position_of_vendor(robot_pos, vendor_message)
-                    position_array = np.array([position[0], position[1]])
-                    flag = True
-                    for wp in self.way_points:
-                        wp_pos= np.array([wp.position[0], wp.position[1]])
-                        if np.linalg.norm(wp_pos-position_array)<1:
-                            flag = False
-                            if wp.distance_detected > distance :
-                                wp.position = position
-                                wp.distance_detected = distance
-                            break
-                    if flag:
-                        vendor= Vendor(position, vendor_name,len(self.way_points),distance)
-                        self.way_points.append(vendor)
-                elif vendor_name not in self.vendor_dic:
-                    #compute position in world of the vendor
-                    robot_pos=(self.x, self.y , self.theta)
-                    position=self.get_position_of_vendor(robot_pos, vendor_message)
-                    #create a vendro python-object 
-                    vendor= Vendor(position, vendor_name,0,distance)
-                    #add vector to dictionary
-                    self.vendor_dic[vendor_name] = vendor
-                elif  self.vendor_dic[vendor_name].distance_detected>distance :
-                    #find vendor when i was closer
-                    #compute position in world of the vendor
-                    robot_pos=(self.x, self.y , self.theta)
-                    position=self.get_position_of_vendor(robot_pos, vendor_message)
-                    vendor=self.vendor_dic[vendor_name]
-                    vendor.position=position
-                    vendor.distance_detected=distance
+
+        #update this only during exploration
+        if not self.stop_map_update_bool:
+
+            #print("vendors we are seeing: ",list_vendors_i_see)
+            #check if what we saw is something new
+            for i in range(len(list_vendors_i_see)):
+                vendor_name=list_vendors_i_see[i]
+                #extract information from the message
+                vendor_message=msg.ob_msgs[i]
+                distance=vendor_message.distance
+                if vendor_name not in ["stop_sign"]:
+                    if False and vendor_name == "potted_plant": #unupdated
+                        robot_pos=(self.x, self.y , self.theta)
+                        position=self.get_position_of_vendor(robot_pos, vendor_message)
+                        position_array = np.array([position[0], position[1]])
+                        flag = True
+                        for wp in self.way_points:
+                            wp_pos= np.array([wp.position[0], wp.position[1]])
+                            if np.linalg.norm(wp_pos-position_array)<1:
+                                flag = False
+                                if wp.distance_detected > distance :
+                                    wp.position = position
+                                    wp.distance_detected = distance
+                                break
+                        if flag:
+                            vendor= Vendor(position, vendor_name,len(self.way_points),distance)
+                            self.way_points.append(vendor)
+                    elif vendor_name not in self.vendor_dic:
+                        #compute position in world of the vendor
+                        robot_pos=(self.x, self.y , self.theta)
+                        position=self.get_position_of_vendor(robot_pos, vendor_message)
+                        #create a vendro python-object 
+                        if position[0]!=-1:
+                            vendor= Vendor(position, vendor_name,0,distance)
+                            #add vector to dictionary
+                            self.vendor_dic[vendor_name] = vendor
+                    elif  self.vendor_dic[vendor_name].distance_detected>distance :
+                        #find vendor when i was closer
+                        #compute position in world of the vendor
+                        robot_pos=(self.x, self.y , self.theta)
+                        position=self.get_position_of_vendor(robot_pos, vendor_message)
+                        if position[0]!=-1:
+                            vendor=self.vendor_dic[vendor_name]
+                            vendor.position=position
+                            vendor.distance_detected=distance
 
 
 
@@ -373,7 +379,7 @@ class Supervisor:
     def rviz_goal_callback(self, msg):
         """ callback for a pose goal sent through rviz """
         origin_frame = "/map" if self.params.mapping else "/odom"
-        rospy.loginfo("Rviz command received!")
+        
 
         #save old state if different from manual or iddle
         if self.mode!=Mode.MANUAL and self.mode!=Mode.IDLE:
@@ -387,14 +393,23 @@ class Supervisor:
        
         try:
             nav_pose_origin = self.trans_listener.transformPose(origin_frame, msg)
-            self.x_g = nav_pose_origin.pose.position.x
-            self.y_g = nav_pose_origin.pose.position.y
-            quaternion = (nav_pose_origin.pose.orientation.x,
-                          nav_pose_origin.pose.orientation.y,
-                          nav_pose_origin.pose.orientation.z,
-                          nav_pose_origin.pose.orientation.w)
-            euler = tf.transformations.euler_from_quaternion(quaternion)
-            self.theta_g = euler[2]
+            x_g = nav_pose_origin.pose.position.x
+            y_g = nav_pose_origin.pose.position.y
+            #check if that is a free point
+            if self.occupancy.is_free((x_g,y_g)):
+                rospy.loginfo("Rviz command received!")
+                self.x_g=x_g
+                self.y_g=y_g
+                quaternion = (nav_pose_origin.pose.orientation.x,
+                            nav_pose_origin.pose.orientation.y,
+                            nav_pose_origin.pose.orientation.z,
+                            nav_pose_origin.pose.orientation.w)
+                euler = tf.transformations.euler_from_quaternion(quaternion)
+                self.theta_g = euler[2]
+                point=(self.x_g,self.y_g,self.theta_g)
+                self.go_to_pose(point)
+            else:
+                rospy.loginfo("Rviz goal can't be reached")
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
         
@@ -472,7 +487,7 @@ class Supervisor:
         if distance<0:
             # distance += 0.1
             print("error in positioning vendor")
-            sys.exit()
+            output=(-1, -1)
 
         
         return output
@@ -691,14 +706,14 @@ class Supervisor:
             if self.close_to(self.x_g,self.y_g,self.theta_g):
                 self.init_wait_on_vendor()
 
-        elif self.mode == Mode.WAYPOINT:
-            if self.close_to(self.x_g,self.y_g,self.theta_g):
-                self.x_g=self.previous_goal[0]
-                self.y_g=self.previous_goal[1]
-                self.theta_g=self.previous_goal[2]
-                rospy.loginfo("going again to vendor {} {} {}".format(self.x_g,self.y_g,self.theta_g))
-                self.mode=Mode.GO_TO_VENDOR
-                self.go_to_pose(self.previous_goal)
+        # elif self.mode == Mode.WAYPOINT:
+        #     if self.close_to(self.x_g,self.y_g,self.theta_g):
+        #         self.x_g=self.previous_goal[0]
+        #         self.y_g=self.previous_goal[1]
+        #         self.theta_g=self.previous_goal[2]
+        #         rospy.loginfo("going again to vendor {} {} {}".format(self.x_g,self.y_g,self.theta_g))
+        #         self.mode=Mode.GO_TO_VENDOR
+        #         self.go_to_pose(self.previous_goal)
 
         elif self.mode==Mode.WAIT_ON_VENDOR:
             self.stay_idle()
