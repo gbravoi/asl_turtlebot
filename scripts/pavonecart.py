@@ -12,6 +12,8 @@ from visualization_msgs.msg import Marker
 import numpy as np
 import tf
 import utils
+from nav_msgs.msg import OccupancyGrid, MapMetaData, Path
+from grids import StochOccupancyGrid2D
 
 
 
@@ -168,16 +170,16 @@ class Supervisor:
         #     (1.5,1.5,0)]
 
         self.explore_points=[
-            (3.1, 0.4, 1.57), #by pizza
-            (2.5, 0.4, 0), #by banana
+            [(3.1, 0.4),"pizza"], #by pizza
+            [(2.5, 0.4),"banana"], #by banana
             
-            (0.3, 0.3, 0), #by origin
-            (0.3, 1.5, 1.57), #by apple #We need to stop by apple
-            (0.6, 2.7, 0), #by curved corner 
-            (2.3, 2.8, 0), #by sandwich
-            (1.5, 2.7, 0), 
-            (2.2, 1.6, 0), #by orange 
-            (1.5, 1.5, 0),
+            # (0.3, 0.3, 0), #by origin
+            [(0.3, 1.5),"apple"], #by apple #We need to stop by apple
+            # (0.6, 2.7, 0), #by curved corner 
+            [(2.3, 2.8),"sandwich"], #by sandwich
+            # (1.5, 2.7, 0), 
+            [(2.2, 1.6),"orange"], #by orange 
+            # (1.5, 1.5, 0),
         ]
 
         # waypoints for getting unstuck
@@ -206,6 +208,13 @@ class Supervisor:
         self.vendors_to_visit = []
         self.vendor_dic = {}  #list of all vendors
         self.current_vendor_index=0
+
+
+        #occupancuy grid
+        self.occupancy=None
+        self.stop_map_update_bool=False
+
+
         ########## PUBLISHERS ##########
 
         # Command pose for controller
@@ -229,6 +238,9 @@ class Supervisor:
         #find way points
         rospy.Subscriber('/find_way_points', Bool, self.find_way_points_callback)
 
+        #occupancy grid
+        rospy.Subscriber('/map', OccupancyGrid, self.map_callback)
+
         # # Stop sign detector
         # rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
 
@@ -250,8 +262,37 @@ class Supervisor:
         
 
     ########## SUBSCRIBER CALLBACKS ##########
+    def map_callback(self,msg):
+        """
+        receives new map info and updates the map
+        """
+        map_probs = msg.data
+        map_width=msg.info.width
+        map_height=msg.info.height
+        map_origin_x=msg.info.origin.position.x
+        map_origin_y=msg.info.origin.position.y
+        map_resolution=msg.info.resolution
+
+
+        # if we've received the map metadata and have a way to update it:
+        if map_width>0 and map_height>0 and len(map_probs)>0:
+            if not self.stop_map_update_bool:
+                #add padding
+                padding_time=1
+                padded=utils.add_padding(padding_time, map_probs, map_height, map_width)
+
+                self.occupancy = StochOccupancyGrid2D(map_resolution,
+                                                    map_width,
+                                                    map_height,
+                                                    map_origin_x,
+                                                    map_origin_y,
+                                                    8,
+                                                    padded, #self.map_probs, #
+                                                    0.3)
+
     def delivery_request_callback(self,msg):
         self.stop_map_update.publish("stop")
+        self.stop_map_update_bool=True
         stores = msg.data.split(",") #[banana, apple]
         print('stores:', stores)
         for vendor in stores:
@@ -268,6 +309,7 @@ class Supervisor:
         Received a list with the objects detected
         If if first time it sees that object, register the vendor
         """
+        # pass
         list_vendors_i_see=msg.objects #list of string
         #print("vendors we are seeing: ",list_vendors_i_see)
         #check if what we saw is something new
@@ -277,9 +319,9 @@ class Supervisor:
             vendor_message=msg.ob_msgs[i]
             distance=vendor_message.distance
             if vendor_name not in ["stop_sign"]:
-                if vendor_name == "potted_plant":
+                if False and vendor_name == "potted_plant":
                     robot_pos=(self.x, self.y , self.theta)
-                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    position=self.get_position_of_vendor(robot_pos, vendor_message)
                     position_array = np.array([position[0], position[1]])
                     flag = True
                     for wp in self.way_points:
@@ -296,7 +338,7 @@ class Supervisor:
                 elif vendor_name not in self.vendor_dic:
                     #compute position in world of the vendor
                     robot_pos=(self.x, self.y , self.theta)
-                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    position=self.get_position_of_vendor(robot_pos, vendor_message)
                     #create a vendro python-object 
                     vendor= Vendor(position, vendor_name,0,distance)
                     #add vector to dictionary
@@ -305,7 +347,7 @@ class Supervisor:
                     #find vendor when i was closer
                     #compute position in world of the vendor
                     robot_pos=(self.x, self.y , self.theta)
-                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    position=self.get_position_of_vendor(robot_pos, vendor_message)
                     vendor=self.vendor_dic[vendor_name]
                     vendor.position=position
                     vendor.distance_detected=distance
@@ -397,11 +439,43 @@ class Supervisor:
                 min_distance = dist
 
         self.remaining_way_points.remove(new_goal)
-        self.x_g, self.y_g, self.theta_g = new_goal.position
+        self.x_g, self.y_g = new_goal.position
+        self.theta_g=0
         self.go_to_pose((self.x_g,self.y_g,self.theta_g))
         rospy.loginfo("send a new waypoint")
 
 
+
+    ##########Helping functions ##########
+    #other functions
+    def get_position_of_vendor(self, robot_pos, vendor):
+        x_rb = robot_pos[0]
+        y_rb = robot_pos[1]
+        th_rb = robot_pos[2]
+        distance = vendor.distance -0.4#0.6
+        th_r = fixAngle(vendor.thetaright)
+        th_l = fixAngle(vendor.thetaleft)
+        th_v = np.mean([th_r, th_l])
+        th_out = th_rb + th_v
+        is_free=False
+
+        while not is_free and distance>0:
+            x_output = x_rb+distance*np.cos(th_out)
+            y_output = y_rb+distance*np.sin(th_out)
+
+            #CHECK IF THAT POSIITON IS NOT IN A WALL
+            output=(x_output, y_output)
+            is_free=self.occupancy.is_free(output)
+            if not is_free:
+                distance-=0.1
+        
+        if distance<0:
+            # distance += 0.1
+            print("error in positioning vendor")
+            sys.exit()
+
+        
+        return output
 
     ########## STATE MACHINE ACTIONS ##########
 
@@ -414,7 +488,6 @@ class Supervisor:
             #next vendor name
             self.current_vendor_index=0
             if self.current_vendor_index<len(self.vendors_to_visit):
-                self.mode=Mode.GO_TO_VENDOR
                 rospy.loginfo("New state: GO_TO_VENDOR")
                 vendor_name=self.vendors_to_visit[self.current_vendor_index]
                 print("Go to vendor ",vendor_name)
@@ -424,6 +497,7 @@ class Supervisor:
                 self.y_g=vendor.position[1]
                 self.theta_g=0
                 rospy.loginfo("vendor_position x:{} y:{} th:{}".format(self.x_g,self.y_g,self.theta_g))
+                self.mode=Mode.GO_TO_VENDOR
 
 
 
@@ -693,21 +767,19 @@ def fixAngle(a):
         return a-2*np.pi
     return a
 
-#other functions
-def get_position_of_vendor(robot_pos, vendor):
-    x_rb = robot_pos[0]
-    y_rb = robot_pos[1]
-    th_rb = robot_pos[2]
-    distance = vendor.distance -0.4#0.6
-    th_r = fixAngle(vendor.thetaright)
-    th_l = fixAngle(vendor.thetaleft)
-    th_v = np.mean([th_r, th_l])
-    th_out = th_rb + th_v
-    x_output = x_rb+distance*np.cos(th_out)
-    y_output = y_rb+distance*np.sin(th_out)
-    return (x_output, y_output)
+
 
 if __name__ == '__main__':
 
     sup = Supervisor()
+
+    # #debug: create vendors
+    # for point in sup.explore_points:
+    #     position=point[0]
+    #     vendor_name=point[1]
+    #     vendor= Vendor(position, vendor_name,0,1)
+    #     #add vector to dictionary
+    #     sup.vendor_dic[vendor_name] = vendor
+        
+
     sup.run()

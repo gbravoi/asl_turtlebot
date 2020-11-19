@@ -115,7 +115,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual4'>
+        <!-- <visual name='visual4'>
           <pose>-0.8 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
@@ -129,7 +129,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>0.0 1.0668021336 0 0 0 1.57079632679</pose>
     </model>
@@ -212,7 +212,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual1'>
+        <!-- <visual name='visual1'>
           <pose>0.0 -0.01 0.1 0 0 1.5708</pose>
           <geometry>
             <box>
@@ -226,7 +226,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>0.275782564389 2.77222353162 0 0 0 0.785398163397</pose>
     </model>
@@ -324,7 +324,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual3'>
+        <!-- <visual name='visual3'>
           <pose>0.0 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
@@ -338,7 +338,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>2.28600457201 3.04800609601 0 0 0 0.0</pose>
     </model>
@@ -382,7 +382,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual3'>
+        <!-- <visual name='visual3'>
           <pose>-1.2 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
@@ -396,7 +396,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>3.65760731521 1.52400304801 0 0 0 -1.57079632679</pose>
     </model>
@@ -440,7 +440,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual3'>
+        <!-- <visual name='visual3'>
           <pose>-0.35 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
@@ -454,9 +454,9 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
         <!-- waypoint -->
-        <visual name='visual4'>
+        <!-- <visual name='visual4'>
           <pose>-1.5 -0.01 0.2 0 0 1.57079632679</pose>
           <geometry>
             <box>
@@ -470,7 +470,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>1.82880365761 0.0 0 0 0 3.14159265359</pose>
     </model>
@@ -877,7 +877,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual2'>
+        <!-- <visual name='visual2'>
           <pose>0.0 0.01 0.2 0 0 1.5707963267</pose>
           <geometry>
             <box>
@@ -891,7 +891,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>1.206502413 1.75260350521 0 0 0 3.14159265359</pose>
     </model>
@@ -989,7 +989,7 @@
           </material>
         </visual>
         <!-- waypoint -->
-        <visual name='visual3'>
+        <!-- <visual name='visual3'>
           <pose>0.0 0.01 0.2 0 0 1.5707963267</pose>
           <geometry>
             <box>
@@ -1003,7 +1003,7 @@
               <name>Tree/Diffuse</name>
             </script>
           </material>
-        </visual>
+        </visual> -->
       </link>
       <pose frame=''>2.61620523241 1.52400304801 0 0 0 1.57079632679</pose>
     </model>

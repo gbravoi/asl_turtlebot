@@ -89,7 +89,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha = 0.009#0.011#0.015 #decreasing this number becomes more similar to yellow, but at some point is an aproximation of a lot of small curves, and this make the system fail
+        self.spline_alpha =0.009#0.011#0.015 #decreasing this number becomes more similar to yellow, but at some point is an aproximation of a lot of small curves, and this make the system fail
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -104,7 +104,7 @@ class Navigator:
         self.going_out_from_wall=False
 
         #waypoints counter
-        self.way_point_counter_max=3
+        self.way_point_counter_max=10
         self.way_point_counter=self.way_point_counter_max
 
         #STOP SIGN PARAMETERS
@@ -211,7 +211,7 @@ class Navigator:
 
             if (self.x_g is not None and not self.near_goal()) and self.mode!=Mode.STOP:
                 # if we have a goal to plan to, replan
-                rospy.loginfo("replanning because we are far away from the goal")
+                # rospy.loginfo("replanning because we are far away from the goal")
                 self.replan() # new map, need to replan
 
     def shutdown_callback(self):
@@ -420,13 +420,13 @@ class Navigator:
         #problem=GeometricRRT( [0,0], [3,3], x_init, x_goal, self.occupancy)
 
 
-        rospy.loginfo("Navigator: computing navigation plan")
+        # rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
 
         if not success:
             if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK: 
                 if self.way_point_counter<=0:
-                    self.find_way_points_pub.publish(True)
+                    # self.find_way_points_pub.publish(True)
                     self.way_point_counter=self.way_point_counter_max
                     self.switch_mode(Mode.IDLE)#in case we where in parking mode
                     self.stay_idle()
@@ -504,12 +504,12 @@ class Navigator:
         #print("map width {}, map height{}".format(self.map_width,self.map_height))
         #problem=GeometricRRT( [0,0], [3,3], x_init, x_goal, self.occupancy)
 
-        rospy.loginfo("Navigator: computing navigation plan")
+        # rospy.loginfo("Navigator: computing navigation plan")
         success =  problem.solve()
         if not success:
             if self.mode==Mode.IDLE or self.mode==Mode.STOP or self.mode==Mode.PARK:  
                 if self.way_point_counter<=0:
-                    self.find_way_points_pub.publish(True)
+                    # self.find_way_points_pub.publish(True)
                     self.way_point_counter=self.way_point_counter_max
                 else:
                     self.way_point_counter-=1
@@ -540,7 +540,7 @@ class Navigator:
 
             #check if i{m in the desired state
             desired_state=self.traj_controller.get_desired_state( self.get_current_plan_time())[0:3]
-            print("desired", desired_state)
+            # print("desired", desired_state)
             x_curr=np.array([self.x,self.y,self.theta])
 
             if np.max(np.abs(x_curr-np.asarray(desired_state)))<1e-2:
@@ -553,7 +553,7 @@ class Navigator:
                 t_remaining_new = t_init_align + t_new[-1]
 
                 if t_remaining_new > t_remaining_curr:
-                    rospy.loginfo("New plan rejected (longer duration than current plan)")
+                    # rospy.loginfo("New plan rejected (longer duration than current plan)")
                     self.publish_smoothed_path(traj_new, self.nav_smoothed_path_rej_pub)
                     return
 
@@ -609,9 +609,10 @@ class Navigator:
                     self.switch_mode(Mode.PARK)
                     #check if aligned
                 elif not self.aligned_while_tracking():
-                     self.switch_mode(Mode.IDLE)
-                     self.stay_idle()
-                     self.replan_new_goal()
+                    rospy.loginfo("replanning aligmnet is wrong")
+                    self.switch_mode(Mode.IDLE)
+                    self.stay_idle()
+                    self.replan_new_goal()
                 elif not self.close_to_plan_start():
                     rospy.loginfo("replanning because far from start")
                     self.going_out_from_wall=False

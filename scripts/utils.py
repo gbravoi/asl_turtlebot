@@ -15,15 +15,15 @@ def add_padding(padding, data, height, width):
         for i in range(0,h):
             for j in range(0,w):
                 if data[i*w+j]==100:#obstacle
-                    img[i,j]=100
-                    img[i+1,j]=100
-                    img[i-1,j]=100
-                    img[i+1,j+1]=100
-                    img[i+1,j-1]=100
-                    img[i-1,j+1]=100
-                    img[i-1,j-1]=100
-                    img[i,j+1]=100
-                    img[i,j-1]=100
+                    img[i,j]=100 #obstacle
+                    img[i+1,j]=max(50,img[i+1,j])
+                    img[i-1,j]=max(50,img[i-1,j])
+                    # img[i+1,j+1]=max(50,img[i+1,j+1])
+                    # img[i+1,j-1]=max(50,img[i+1,j-1])
+                    # img[i-1,j+1]=max(50,img[i-1,j+1])
+                    # img[i-1,j-1]=max(50,img[i-1,j-1])
+                    img[i,j+1]=max(50,img[i,j+1])
+                    img[i,j-1]=max(50,img[i,j-1])
         data=img.flatten()
     
     return list(img.flatten())
