@@ -11,6 +11,8 @@ def add_padding(padding, data, height, width):
     w=width
     img = np.zeros((h, w))
     percentage=100
+
+    # padding=2
 	
     for k in range(padding):
         for i in range(0,h):
@@ -19,10 +21,10 @@ def add_padding(padding, data, height, width):
                     img[i,j]=100 #obstacle
                     img[i+1,j]=max(percentage,img[i+1,j])
                     img[i-1,j]=max(percentage,img[i-1,j])
-                    # img[i+1,j+1]=max(percentage,img[i+1,j+1])
-                    # img[i+1,j-1]=max(percentage,img[i+1,j-1])
-                    # img[i-1,j+1]=max(percentage,img[i-1,j+1])
-                    # img[i-1,j-1]=max(percentage,img[i-1,j-1])
+                    img[i+1,j+1]=max(percentage,img[i+1,j+1])
+                    img[i+1,j-1]=max(percentage,img[i+1,j-1])
+                    img[i-1,j+1]=max(percentage,img[i-1,j+1])
+                    img[i-1,j-1]=max(percentage,img[i-1,j-1])
                     img[i,j+1]=max(percentage,img[i,j+1])
                     img[i,j-1]=max(percentage,img[i,j-1])
                 elif data[i*w+j]!=-1:

@@ -89,7 +89,7 @@ class Navigator:
         self.at_thresh_theta = 0.05
 
         # trajectory smoothing
-        self.spline_alpha =0.009#0.011#0.015 #decreasing this number becomes more similar to yellow, but at some point is an aproximation of a lot of small curves, and this make the system fail
+        self.spline_alpha =0.007#0.009#0.011#0.015 #decreasing this number becomes more similar to yellow, but at some point is an aproximation of a lot of small curves, and this make the system fail
         self.traj_dt = 0.1
 
         # trajectory tracking controller parameters
@@ -204,7 +204,7 @@ class Navigator:
                                                     self.map_origin[1],
                                                     4,#8,
                                                     padded, #self.map_probs, #
-                                                    0.5)
+                                                    0.4)#the smaller more chances to think is an obstacle.
 
 
 
