@@ -37,7 +37,7 @@ class Vendor:
         #            each need to have a separate marker ID.
         marker.id = self.marker_id
 
-        marker.type = 1# sphere
+        marker.type = 1 # cube
         marker.scale.x = 0.1
         marker.scale.y = 0.1
         marker.scale.z = 0.1
@@ -57,6 +57,16 @@ class Vendor:
             marker.color.r = 1
             marker.color.g = 1
             marker.color.b = 1
+
+        
+        if self.name=="potted_plant":
+            marker.type = 3
+            marker.color.r = 0
+            marker.color.g = 1
+            marker.color.b = 0
+            marker.scale.x = 0.1
+            marker.scale.y = 0.1
+            marker.scale.z = 0.5
 
         marker.pose.position.x = self.position[0]
         marker.pose.position.y = self.position[1]
@@ -170,13 +180,14 @@ class Supervisor:
             (1.5, 1.5, 0),
         ]
 
-        #waypoints for getting unstuck
+        # waypoints for getting unstuck
         self.way_points = [
             (2.4,0.3,0),
             (2.4,2.7,0),
             (2.4,1.5,0),
             (0.3,1.5,0)
         ]
+        # self.way_points = []
 
         self.remaining_way_points = []
 
@@ -217,7 +228,6 @@ class Supervisor:
 
         #find way points
         rospy.Subscriber('/find_way_points', Bool, self.find_way_points_callback)
-
 
         # # Stop sign detector
         # rospy.Subscriber('/detector/stop_sign', DetectedObject, self.stop_sign_detected_callback)
@@ -267,7 +277,23 @@ class Supervisor:
             vendor_message=msg.ob_msgs[i]
             distance=vendor_message.distance
             if vendor_name not in ["stop_sign"]:
-                if vendor_name not in self.vendor_dic:
+                if False and vendor_name == "potted_plant":
+                    robot_pos=(self.x, self.y , self.theta)
+                    position=get_position_of_vendor(robot_pos, vendor_message)
+                    position_array = np.array([position[0], position[1]])
+                    flag = True
+                    for wp in self.way_points:
+                        wp_pos= np.array([wp.position[0], wp.position[1]])
+                        if np.linalg.norm(wp_pos-position_array)<1:
+                            flag = False
+                            if wp.distance_detected > distance :
+                                wp.position = position
+                                wp.distance_detected = distance
+                            break
+                    if flag:
+                        vendor= Vendor(position, vendor_name,len(self.way_points),distance)
+                        self.way_points.append(vendor)
+                elif vendor_name not in self.vendor_dic:
                     #compute position in world of the vendor
                     robot_pos=(self.x, self.y , self.theta)
                     position=get_position_of_vendor(robot_pos, vendor_message)
@@ -354,23 +380,24 @@ class Supervisor:
             self.remaining_way_points = list(self.way_points)
             self.mode = Mode.WAYPOINT
         if len(self.remaining_way_points)==0:
-            rospy.loginfo("Failed at finding a path -- Tested all way points")
+            rospy.loginfo("Failed at finding a path -- Tried all way points")
             return 
         new_goal = (-1, -1, -1)
         min_distance = float("inf")
+        robot_position=np.array([self.x,self.y])
         goal = np.array([self.x_g, self.y_g])
         for point in self.remaining_way_points:
+            # curr_point = np.array([point.position[0], point.position[1]])
             curr_point = np.array([point[0], point[1]])
             dist = np.linalg.norm(goal-curr_point)
-            robot_position=np.array(self.x,self.y,self.theta)
             dist_own= np.linalg.norm(robot_position-curr_point) #compare with robot position, need to be far away
-            #otherwise, it will enter a lopp where always goes to that point
+            #otherwise, it will enter a loop where always goes to that point
             if dist < min_distance and dist_own>0.5:
                 new_goal = point
                 min_distance = dist
 
         self.remaining_way_points.remove(new_goal)
-        self.x_g, self.y_g, self.theta_g = new_goal
+        self.x_g, self.y_g, self.theta_g = new_goal#.position
         self.go_to_pose((self.x_g,self.y_g,self.theta_g))
         rospy.loginfo("send a new waypoint")
 
@@ -653,6 +680,9 @@ class Supervisor:
             for vendor in self.vendor_dic.values():
                 #print(vendor.name)
                 vendor.publish_vendor_position()
+
+            # for tree in self.way_points:
+            #     tree.publish_vendor_position()
 
             rate.sleep()
 

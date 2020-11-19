@@ -114,6 +114,22 @@
             </script>
           </material>
         </visual>
+        <!-- waypoint -->
+        <visual name='visual4'>
+          <pose>-0.8 -0.01 0.2 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
+            </script>
+          </material>
+        </visual>
       </link>
       <pose frame=''>0.0 1.0668021336 0 0 0 1.57079632679</pose>
     </model>
@@ -174,7 +190,7 @@
 
     <model name='wall_3'>
       <static>1</static>
-      <link name='link'>
+      <link name='link'> 
         <collision name='collision'>
           <geometry>
             <box>
@@ -182,7 +198,7 @@
             </box>
           </geometry>
         </collision>
-        <visual name='visual'>
+        <visual name='visual0'>
           <geometry>
             <box>
               <size>0.286087921841 0.001 1</size>
@@ -192,6 +208,22 @@
             <script>
               <name>Gazebo/White</name>
               <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <!-- waypoint -->
+        <visual name='visual1'>
+          <pose>0.0 -0.01 0.1 0 0 1.5708</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.3 0.2</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -277,10 +309,10 @@
           </material>
         </visual>
         <visual name='visual2'>
-          <pose>0.0 -0.01 0.3 0 0 1.57079632679</pose>
+          <pose>-1 -0.01 0.3 0 0 1.57079632679</pose>
           <geometry>
             <box>
-              <size>0.001 0.2 0.13</size>
+              <size>0.001 0.3 0.195</size>
             </box>
           </geometry>
           <material>
@@ -288,6 +320,22 @@
               <uri>model://Orange/materials/scripts</uri>
               <uri>model://Orange/materials/textures</uri>
               <name>Orange/Diffuse</name>
+            </script>
+          </material>
+        </visual>
+        <!-- waypoint -->
+        <visual name='visual3'>
+          <pose>0.0 -0.01 0.2 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -315,6 +363,37 @@
             <script>
               <name>Gazebo/White</name>
               <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+          </material>
+        </visual>
+        <visual name='visual2'>
+          <pose>0 -0.01 0.3 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.3 0.195</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Pizza/materials/scripts</uri>
+              <uri>model://Pizza/materials/textures</uri>
+              <name>Pizza/Diffuse</name>
+            </script>
+          </material>
+        </visual>
+        <!-- waypoint -->
+        <visual name='visual3'>
+          <pose>-1.2 -0.01 0.2 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
             </script>
           </material>
         </visual>
@@ -346,10 +425,10 @@
           </material>
         </visual>
          <visual name='visual2'>
-          <pose>-0.5 -0.01 0.3 0 0 1.57079632679</pose>
+          <pose>0.3 -0.01 0.3 0 0 1.57079632679</pose>
           <geometry>
             <box>
-              <size>0.001 0.2 0.13</size>
+              <size>0.001 0.3 0.195</size>
             </box>
           </geometry>
           <material>
@@ -360,7 +439,38 @@
             </script>
           </material>
         </visual>
-
+        <!-- waypoint -->
+        <visual name='visual3'>
+          <pose>-0.35 -0.01 0.2 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
+            </script>
+          </material>
+        </visual>
+        <!-- waypoint -->
+        <visual name='visual4'>
+          <pose>-1.5 -0.01 0.2 0 0 1.57079632679</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
+            </script>
+          </material>
+        </visual>
       </link>
       <pose frame=''>1.82880365761 0.0 0 0 0 3.14159265359</pose>
     </model>
@@ -766,6 +876,22 @@
             </script>
           </material>
         </visual>
+        <!-- waypoint -->
+        <visual name='visual2'>
+          <pose>0.0 0.01 0.2 0 0 1.5707963267</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
+            </script>
+          </material>
+        </visual>
       </link>
       <pose frame=''>1.206502413 1.75260350521 0 0 0 3.14159265359</pose>
     </model>
@@ -820,21 +946,6 @@
             </script>
           </material>
         </visual>
-        <visual name='visual2'>
-          <pose>-0.1 -0.01 0.3 0 0 1.57079632679</pose>
-          <geometry>
-            <box>
-              <size>0.001 0.2 0.13</size>
-            </box>
-          </geometry>
-          <material>
-            <script>
-              <uri>model://Pizza/materials/scripts</uri>
-              <uri>model://Pizza/materials/textures</uri>
-              <name>Pizza/Diffuse</name>
-            </script>
-          </material>
-        </visual>
       </link>
       <pose frame=''>2.87020574041 0.558801117602 0 0 0 3.14159265359</pose>
     </model>
@@ -863,10 +974,10 @@
           </material>
         </visual>
          <visual name='visual2'>
-         <pose>0.0 0.01 0.3 0 0 1.57079632679</pose>
+         <pose>-0.5 0.01 0.3 0 0 1.57079632679</pose>
           <geometry>
             <box>
-              <size>0.001 0.2 0.13</size>
+              <size>0.001 0.3 0.195</size>
             </box>
           </geometry>
           <material>
@@ -874,6 +985,22 @@
               <uri>model://Sandwich/materials/scripts</uri>
               <uri>model://Sandwich/materials/textures</uri>
               <name>Sandwich/Diffuse</name>
+            </script>
+          </material>
+        </visual>
+        <!-- waypoint -->
+        <visual name='visual3'>
+          <pose>0.0 0.01 0.2 0 0 1.5707963267</pose>
+          <geometry>
+            <box>
+              <size>0.001 0.6 0.4</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>model://Tree/materials/scripts</uri>
+              <uri>model://Tree/materials/textures</uri>
+              <name>Tree/Diffuse</name>
             </script>
           </material>
         </visual>
