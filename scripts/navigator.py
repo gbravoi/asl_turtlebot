@@ -109,8 +109,8 @@ class Navigator:
 
         #STOP SIGN PARAMETERS
         # Minimum distance from a stop sign to obey it
-        self.stop_min_dist =0.6#rospy.get_param("~stop_min_dist", 0.5)
-        self.crossing_time=3
+        self.stop_min_dist =0.8#rospy.get_param("~stop_min_dist", 0.5)
+        self.crossing_time=5
         self.stop_time=3
         self.previous_mode=None
         self.stop_sign_start = None
@@ -202,9 +202,9 @@ class Navigator:
                                                     self.map_height,
                                                     self.map_origin[0],
                                                     self.map_origin[1],
-                                                    4,#8,
+                                                    8,
                                                     padded, #self.map_probs, #
-                                                    0.4)#the smaller more chances to think is an obstacle.
+                                                    0.5)#the smaller more chances to think is an obstacle.
 
 
 

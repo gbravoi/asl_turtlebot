@@ -124,7 +124,7 @@ class SupervisorParams:
 
         # Time to stop at a stop sign
         self.stop_time = rospy.get_param("~stop_time", 3.)
-        self.vendor_stop_time = 10
+        self.vendor_stop_time = 5
 
         # Minimum distance from a stop sign to obey it
         self.stop_min_dist = rospy.get_param("~stop_min_dist", 0.5)

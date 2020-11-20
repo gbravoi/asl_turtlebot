@@ -3,11 +3,7 @@ Panels:
     Help Height: 89
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Global Options1
-        - /Status1
-        - /Dog1
-        - /Tree1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 356
   - Class: rviz/Selection
@@ -57,7 +53,7 @@ Visualization Manager:
       Marker Topic: /marker_topic
       Name: Goal
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Camera
@@ -71,26 +67,21 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Apple: true
         Axes: true
         Banana: true
         Dog: true
         Goal: true
         Grid: true
-        Kite: true
         LaserScan: true
         Map: true
         Orange: true
         Path: true
         Path planned: true
         Pizza: true
-        Refrigerator: true
         Rejected Path: true
         TF: true
         Value: true
-        hot dog: true
-        parking meter: true
         sandwich: true
       Zoom Factor: 1
     - Alpha: 0.699999988
@@ -180,7 +171,7 @@ Visualization Manager:
       Marker Topic: /vendor_marker/pizza
       Name: Pizza
       Namespaces:
-        "": true
+        {}
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -221,7 +212,7 @@ Visualization Manager:
       Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 1.43375872e-35
+      Max Intensity: 2.51422056e-36
       Min Color: 0; 0; 0
       Min Intensity: 0
       Name: LaserScan
@@ -238,40 +229,8 @@ Visualization Manager:
       Value: true
     - Class: rviz/Marker
       Enabled: true
-      Marker Topic: /vendor_marker/kite
-      Name: Kite
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vendor_marker/refrigerator
-      Name: Refrigerator
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vendor_marker/parking_meter
-      Name: parking meter
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
       Marker Topic: /vendor_marker/sandwich
       Name: sandwich
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vendor_marker/hot_dog
-      Name: hot dog
       Namespaces:
         {}
       Queue Size: 100
@@ -330,14 +289,6 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: true
-    - Class: rviz/Marker
-      Enabled: true
-      Marker Topic: /vendor_marker/potted_plant
-      Name: Tree
-      Namespaces:
-        {}
-      Queue Size: 100
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -363,25 +314,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 7.05832291
+      Distance: 6.03372622
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.86372757
-        Y: 0.475578874
-        Z: -0.511359453
+        X: 2.30674887
+        Y: 1.00315416
+        Z: -0.910917282
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.23979652
+      Pitch: 0.909796596
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.62539768
+      Yaw: 1.59539771
     Saved: ~
 Window Geometry:
   Camera:
@@ -401,5 +352,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1236
-  X: 303
-  Y: 1
+  X: 128
+  Y: 2
